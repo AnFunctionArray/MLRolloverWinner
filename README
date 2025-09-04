@@ -1,0 +1,21 @@
+This project is about winning.
+
+You play against a simple SHA-512 algo that generate rollover with different values based on input server seed and client seed and nonce. Over long-term you are in profit.
+
+You need several "addons":
+
+https://github.com/pytorch/pytorch/pull/109506
+https://github.com/raymondyfei/lbfgsb-gpu/tree/master
+
+And of-course the torch C++ library - prefered CPU version it's faster with Intel CPU (but you can utilise CUDA too - however it would be slower).
+And if you want to to plug yourself online against certain provider you could if you install bun.exe and fix several paths inside the example-app.cpp file (and api keys inside the mjs files).
+
+However the online version is very slow (I was thinking about optimizations - where I start an bun.exe instance and just wait for "input" from a pipe after each bet so connections don't get reset each time).
+
+I'm building with Visual Studio 2022 for Windows with C++.
+
+You can set REAL_BAL to false or true depending if you want to play online. And also DEF_BET_AMNT to the base bet amount of currency in play (which if you play online you need to adjust in the JS files too - it's currently ETC).
+
+I'm open to cleaning code pull-requests.
+
+DON'T LOOK into the RNG stuff and says it's RNG - those ARE NEVER USED (as a lot of things) - they are just leftover - currently the algo is solely based on the actual rollovers.
