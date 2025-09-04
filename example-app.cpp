@@ -1781,7 +1781,7 @@ int main(int, char**) {
 												bool actualpred = wasab;
 
 												float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
-												int numtrgt = std::max(200, std::min((int)(10000 * coef), 9800));
+												int numtrgt = 200;//std::max(200, std::min((int)(10000 * coef), 9800));
 												int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
 
 												float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
