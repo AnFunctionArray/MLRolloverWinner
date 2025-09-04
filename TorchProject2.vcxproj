@@ -1,0 +1,266 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{eaacdd05-93ce-419a-89a0-21240800ceea}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.26100.0</WindowsTargetPlatformVersion>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>TorchProject2</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '16.0'">v142</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '17.0'">v143</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '16.0'">v142</PlatformToolset>
+    <PlatformToolset Condition="'$(VisualStudioVersion)' == '17.0'">v143</PlatformToolset>
+    <EnableASAN>false</EnableASAN>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Users\sasho\source\repos\TorchProject2\TorchProject2\x64\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TorchProject2.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">TorchProject2</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TorchProject2.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">TorchProject2</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LibraryPath>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\lib\x64;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\include;D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\include\torch\csrc\api\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include;C:\Program Files\NVIDIA Corporation\NvToolsExt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <DebugInformationFormat>OldStyle</DebugInformationFormat>
+      <DisableSpecificWarnings>4267;4251;4522;4838;4305;4244;4190;4101;4996;4275</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NOMINMAX;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\include;D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\include\torch\csrc\api\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include;C:\Program Files\NVIDIA Corporation\NvToolsExt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\include;D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\include\torch\csrc\api\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include;C:\Program Files\NVIDIA Corporation\NvToolsExt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+      <Command>setlocal
+xcopy "D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\lib" "D:\Users\sasho\source\repos\TorchProject2\TorchProject2\x64\Debug" /D /Y
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\asmjit.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\c10.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\c10_cuda.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\caffe2_nvrtc.lib
+;D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\cpuinfo.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\dnnl.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\fbgemm.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\fmtd.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\kineto.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\libprotobufd.lib
+;D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\libprotobuf-lited.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\libprotocd.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\pthreadpool.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\sleef.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\torch.lib;
+D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\torch_cpu.lib
+;D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\torch_cuda.lib
+;D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-debug-2.5.0.dev20240630+cu118\libtorch\lib\XNNPACK.lib;gdi32.lib;user32.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;cudart.lib;cuda.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64 /INCLUDE:"?warp_size@cuda@at@@YAHXZ"</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:\Users\sasho\source\repos\TorchProject2\TorchProject2/x64/Debug/TorchProject2.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:\Users\sasho\source\repos\TorchProject2\TorchProject2/x64/Debug/TorchProject2.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include;C:\Program Files\NVIDIA Corporation\NvToolsExt\include;$(ProjectDir);C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\include;C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\include\torch\csrc;C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\include\torch\csrc\api\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /bigobj</AdditionalOptions>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <DisableSpecificWarnings>4267;4251;4522;4838;4305;4244;4190;4101;4996;4275</DisableSpecificWarnings>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <Optimization>Full</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;NOMINMAX;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <OmitFramePointers>true</OmitFramePointers>
+      <WholeProgramOptimization>true</WholeProgramOptimization>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;NOMINMAX;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\include;D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\include\torch\csrc\api\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include;C:\Program Files\NVIDIA Corporation\NvToolsExt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\include;D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\include\torch\csrc\api\include;C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\include;C:\Program Files\NVIDIA Corporation\NvToolsExt\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <PostBuildEvent>
+      <Message>
+      </Message>
+      <Command>setlocal
+xcopy "D:\Users\sasho\Downloads\libtorch-win-shared-with-deps-2.2.2+cu118\libtorch\lib" "D:\Users\sasho\source\repos\TorchProject2\TorchProject2\x64\Release" /D /Y
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+    </PostBuildEvent>
+    <Link>
+      <AdditionalDependencies>gdi32.lib;user32.lib;d3d12.lib;d3dcompiler.lib;dxgi.lib;Advapi32.lib;"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\lib\x64\cuda.lib";"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\lib\x64\cublas.lib";"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v12.6\lib\x64\cudart.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\asmjit.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\c10.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\cpuinfo.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\dnnl.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\fbgemm.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\fmt.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\kineto.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\libittnotify.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\libprotobuf.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\libprotobuf-lite.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\libprotoc.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\microkernels-prod.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\pthreadpool.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\sleef.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\torch.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\torch_cpu.lib";"C:\Users\Administrator\Downloads\libtorch-win-shared-with-deps-2.8.0+cpu\libtorch\lib\XNNPACK.lib"</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:\Users\sasho\source\repos\TorchProject2\TorchProject2/x64/Release/TorchProject2.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:\Users\sasho\source\repos\TorchProject2\TorchProject2/x64/Release/TorchProject2.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+      <DelayLoadDLLs>
+      </DelayLoadDLLs>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <CudaCompile>
+      <AdditionalCompilerOptions>
+      </AdditionalCompilerOptions>
+    </CudaCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="lbfgs1cu.h" />
+    <ClInclude Include="lbfgs1.h" />
+    <ClInclude Include="culbfgsb\ap.h" />
+    <ClInclude Include="culbfgsb\apvt.h" />
+    <ClInclude Include="culbfgsb\culbfgsb.h" />
+    <ClInclude Include="culbfgsb\cutil_inline.h" />
+    <ClInclude Include="culbfgsb\lbfgsbcpu.h" />
+    <ClInclude Include="culbfgsb\lbfgsbcuda.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="example-app.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="lbfgs1.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Use</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="culbfgsb\ap.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="culbfgsb\lbfgsb.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="culbfgsb\lbfgsbcpu.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="nadam.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="shaders.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.0</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">4.0</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">VSMain</EntryPointName>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="rng.asm" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\masm.targets" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.6.targets" />
+  </ImportGroup>
+</Project>
