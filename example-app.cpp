@@ -1781,7 +1781,7 @@ int main(int, char**) {
 												bool actualpred = wasab;
 
 												float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
-												int numtrgt = 200;//std::max(200, std::min((int)(10000 * coef), 9800));
+												int numtrgt = 5000;//std::max(200, std::min((int)(10000 * coef), 9800));
 												int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
 
 												float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
@@ -1813,7 +1813,7 @@ int main(int, char**) {
 												else {
 													numres = getRoll(serverSeedl, clientSeedl, noncel);
 													resir = !((numres > 4999) == !!actualpred);
-													fresir = wasab ? !((numres > numtrgt)) : !((numres < numtrgt));
+													fresir = wasab ? !((numres > numtrgt - 1)) : !((numres < numtrgt));
 												}
 
 
@@ -1837,7 +1837,7 @@ int main(int, char**) {
 												rmaxbal = std::max(rrbal, rmaxbal).load();
 												rminbal = std::min(rrbal, rminbal).load();
 
-												vbal2 += avret;
+												vbal2 += (!fresir ? 1 : -1);
 
 												vbal += (!fresir ? 1 : -1);
 
@@ -1869,8 +1869,9 @@ int main(int, char**) {
 													dobetr = !btrain;
 													needregen = vbal2 < 0;
 													tolrnll2 = abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-													if (vbal2 < lstvbal2)
-														fwdhlbl2.copy_(fwdhlblout.contiguous().clone());
+													if (vbal2 < lstvbal2) {
+														fwdhlbl2.copy_(fwdhlblout.contiguous());
+													}
 													if (1) {
 														if (0)
 															tolrnl52m = torch::vstack({ tolrnl52m, tolrnll2 }).cuda();
