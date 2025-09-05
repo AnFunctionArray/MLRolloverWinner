@@ -158,7 +158,7 @@ torch::Tensor hybrid_loss(
 	torch::Tensor validation_matrix 
 ) {
 
-	torch::Tensor sl_loss = torch::cross_entropy_loss(
+	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
 		sl_target
 
@@ -722,7 +722,7 @@ struct Net2Impl : NetImpl {
 
 		todrawres = inputl;
 
-		auto cnvout = inputl.flatten().softmax(0).reshape_as(inputl);
+		auto cnvout = inputl;
 
 
 
@@ -1776,11 +1776,11 @@ int main(int, char**) {
 
 
 												auto indn = (totrainl.flatten().argmax().item().toInt() + 0) % 400;
-												volatile bool wasab = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
+												volatile bool wasab = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn] > 0.5).item().toBool() : 0;
 
 												bool actualpred = wasab;
 
-												float coef = reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0.01;
+												float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
 												int numtrgt = 5000;//std::max(200, std::min((int)(10000 * coef), 9800));
 												int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
 
@@ -1804,9 +1804,8 @@ int main(int, char**) {
 												volatile int numres, resir, fresir;
 
 												
-												volatile float betamntfl = wasab ? DEF_BET_AMNTF * (coef * 400.) : DEF_BET_AMNTF * ((1. - coef) * 400.);//trainedb ? (1. / 100.) * ((double)(orbal + rrbal) / 100000000.) : DEF_BET_;
-												if (betamntfl < DEF_BET_AMNTF)
-													betamntfl = DEF_BET_AMNTF;
+												volatile float betamntfl = trainedb ? (1. / 100.) * ((double)(orbal + rrbal) / 100000000.) : DEF_BET_AMNTF;
+
 												if (REAL_BAL) {
 													fresir = dobet(wasab, betamntfl, ch, numres);
 													resir = !((numres > 4999) == !!actualpred);
@@ -1871,12 +1870,8 @@ int main(int, char**) {
 													needregen = vbal2 < 0;
 													tolrnll2 = abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
 													if (vbal2 < lstvbal2) {
-														//betamntflss = DEF_BET_AMNTF;
 														fwdhlbl2.copy_(fwdhlblout.contiguous());
 													}
-													//else {
-													//	betamntflss += betamntflss * 0.1;
-													//}
 													if (1) {
 														if (0)
 															tolrnl52m = torch::vstack({ tolrnl52m, tolrnll2 }).cuda();
