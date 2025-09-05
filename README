@@ -1,5 +1,7 @@
 This project is about winning.
 
+Except currently you don't because of the RTP - which is 99% percent but even so after you make 20 000 wagers it adds up (even if you are 700 net wins profit at this point).
+
 You play against a simple SHA-512 algo that generate rollover with different values based on input server seed and client seed and nonce. Over long-term you are in profit.
 
 You need several "addons":
