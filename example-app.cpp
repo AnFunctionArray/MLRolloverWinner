@@ -158,9 +158,9 @@ torch::Tensor hybrid_loss(
 	torch::Tensor validation_matrix 
 ) {
 
-	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
+	torch::Tensor sl_loss = torch::cross_entropy_loss(
 		model_output,
-		sl_target
+		sl_target, {}, torch::Reduction::Sum
 
 	);
 
@@ -1776,11 +1776,11 @@ int main(int, char**) {
 
 
 												auto indn = (totrainl.flatten().argmax().item().toInt() + 0) % 400;
-												volatile bool wasab = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn] > 0.5).item().toBool() : 0;
+												volatile bool wasab = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
 
 												bool actualpred = wasab;
 
-												float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
+												float coef = reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0.5;
 												int numtrgt = 5000;//std::max(200, std::min((int)(10000 * coef), 9800));
 												int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
 
@@ -2205,7 +2205,7 @@ int main(int, char**) {
 												
 												auto [resallpr, reswillwinpr] = test2->forward(totrainllst, abvsgridslst, rfgridlst, fwdhlbl2, nullptr, 0);
 										
-												reswillwino = resallpr.squeeze(0).flatten(1);
+												reswillwino = resallpr.squeeze(0).softmax(1).flatten(1);
 
 
 												if (!torch::all(reswillwino.isfinite()).item().toBool()) {
