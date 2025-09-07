@@ -232,14 +232,16 @@ torch::Tensor hybrid_loss(
 	torch::Tensor validation_matrix 
 ) {
 
-	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
+	torch::Tensor sl_loss = /*torch::binary_cross_entropy_with_logits(
 		model_output,
 		sl_target, validation_matrix
 
-	);
+	);*/
+
+		torch::abs(torch::tanh(model_output) - sl_target) * validation_matrix;
 
 	float lambda = 0.5; 
-	return sl_loss;
+	return sl_loss.mean();
 }
 
 
@@ -1857,12 +1859,12 @@ int main(int, char**) {
 
 
 												auto indn = (totrainl.flatten().argmax().item().toInt() + 0) % 400;
-												volatile bool wasab = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
+												volatile bool wasab = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.).item().toBool() : 0;
 
 												bool actualpred = wasab;
 
-												float coef = reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0.5;
-												int numtrgt = std::max(200, std::min((int)(10000 * coef), 9800));
+												float coef = reswillwino.defined() ? ((reswillwino)[0][indn]).abs().item().toFloat() : 0.5;
+												int numtrgt = std::max(200, std::min((int)(wasab ? 9999 * coef : 5000 * (1. - coef)), 9800));
 												int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
 
 												float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
@@ -1897,7 +1899,7 @@ int main(int, char**) {
 												else {
 													numres = getRoll(serverSeedl, clientSeedl, noncel);
 													resir = !((numres > 4999) == !!actualpred);
-													fresir = wasab ? !((numres > numtrgt - 1)) : !((numres < numtrgt));
+													fresir = wasab ? !((numres > numtrgt)) : !((numres < numtrgt));
 												}
 
 
@@ -1957,7 +1959,7 @@ int main(int, char**) {
 													btrain = totrainlm.defined();
 													dobetr = !btrain;
 													needregen = vbal2 < 0;
-													tolrnll2 = abvsgrids.bitwise_not().clone().detach().toType(c10::ScalarType::Float) / 10000.;//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
+													tolrnll2 = (abvsgrids.bitwise_not().clone().detach().toType(c10::ScalarType::Float) - 5000.) / 10000.;//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
 													rfmsk = ((rfgrid * wmsk) / ((rfgrid - 9999).abs() * wmsklst + 1e-6)).sigmoid();
 													wmsklst = wmsk.clone().detach();
 													if (vbal2 < lstvbal2,1) {
@@ -2334,7 +2336,7 @@ int main(int, char**) {
 										
 												reswillwino1lst = reswillwino1.defined() ? reswillwino1.clone().detach() : reswillwino1lst;
 												reswillwino1 = resallpr.squeeze(0).clone().detach();
-												reswillwino = reswillwino1.sigmoid().flatten(1);
+												reswillwino = torch::tanh(reswillwino1).flatten(1);
 
 
 												if (!torch::all(reswillwino.isfinite()).item().toBool()) {
