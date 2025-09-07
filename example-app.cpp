@@ -233,10 +233,10 @@ torch::Tensor hybrid_loss(
 	torch::Tensor pos_msk
 ) {
 
-	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
+	torch::Tensor sl_loss = torch::mse_loss(
 		model_output,
-		sl_target, validation_matrix,
-		pos_msk
+		sl_target//, validation_matrix,
+		//pos_msk
 	);
 
 	float lambda = 0.5;
@@ -1859,17 +1859,20 @@ int main(int, char**) {
 
 
 								auto indn = (totrainl.flatten().argmax().item().toInt() + 0) % 400;
-								volatile bool wasab = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
+								volatile bool wasab = ((abvsgrids)[0].flatten()[indn] > 0.5).item().toBool();//
+								volatile bool wilwin = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.).item().toBool() : 0;
 
+								wasab = wilwin ? wasab : !wasab;
 								bool actualpred = wasab;
 
-								float coef = reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0.5;
-								int numtrgt = 5000;//std::max(200, std::min((int)(10000 * coef), 9800));
+								//float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
+								int numtrgt = wasab ? 4949 : 4950;//std::max(200, std::min((int)(10000 * coef), 9800));
 								int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
 
 								float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
 								volatile float ch = ((float)numtrgtprob / 10000) * 100.;
-								trainedb = 0;
+								//trainedb = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.).item().toBool() : 0;//!wasab;
+
 								prabs[modes] = (float)actualpred;
 
 								int noncel;
@@ -1887,7 +1890,7 @@ int main(int, char**) {
 								volatile int numres, resir, fresir;
 
 
-								volatile float betamntfl = DEF_BET_AMNTF;//((double)(orbal + rrbal) / 100000000.) * coefminbet;
+								volatile float betamntfl = trainedb ? DEF_BET_AMNTF + DEF_BET_AMNTF * 0.04 : DEF_BET_AMNTF;//(1. / 100.) * ((double)(orbal + rrbal) / 100000000.) : DEF_BET_AMNTF;
 								if (betamntfl < DEF_BET_AMNTF) {
 									betamntfl = DEF_BET_AMNTF;
 								}
@@ -1899,7 +1902,7 @@ int main(int, char**) {
 								else {
 									numres = getRoll(serverSeedl, clientSeedl, noncel);
 									resir = !((numres > 4999) == !!actualpred);
-									fresir = wasab ? !((numres > numtrgt - 1)) : !((numres < numtrgt));
+									fresir = wasab ? !((numres > numtrgt)) : !((numres < numtrgt));
 								}
 
 
@@ -1945,7 +1948,7 @@ int main(int, char**) {
 
 								}
 								rfgrid[0].flatten()[indn] = float(predright);
-								wmsk[0].flatten()[indn] = (!fresir ? 1 : -1);
+								wmsk[0].flatten()[indn] = (+vbal2);
 
 								totrainl = torch::roll(totrainl, 1);
 
@@ -1959,11 +1962,11 @@ int main(int, char**) {
 									btrain = totrainlm.defined();
 									dobetr = !btrain;
 									needregen = vbal2 < 0;
-									tolrnll2 = abvsgrids.clone().detach();//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-									rfmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid() * ((wmsklst.flatten().softmax(0).reshape_as(rfgrid) - wmsk.flatten().softmax(0).reshape_as(rfgrid)).sigmoid());//(rfgrid + 1.) / 2.;//((rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
-									posmsk = torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
-									wmsklst = wmsk.clone().detach();
-									if (vbal2 < lstvbal2, 1) {
+									tolrnll2 = wmsk - wmsklst;//abvsgrids.clone().detach();//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
+									//rfmsk = ((wmsklst.flatten().softmax(0).reshape_as(rfgrid) / wmsk.flatten().softmax(0).reshape_as(rfgrid)));//(rfgrid + 1.) / 2.;//((rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
+									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
+									//wmsklst = wmsk.clone().detach();
+									if (vbal2 < lstvbal2) {
 										//trainedb = betsitesrmade400g > 1;
 										fwdhlbl2.copy_(fwdhlblout.contiguous());
 									}
@@ -2337,7 +2340,7 @@ int main(int, char**) {
 
 									reswillwino1lst = reswillwino1.defined() ? reswillwino1.clone().detach() : reswillwino1lst;
 									reswillwino1 = resallpr.squeeze(0).clone().detach();
-									reswillwino = reswillwino1.sigmoid().flatten(1);
+									reswillwino = reswillwino1.flatten(1);
 
 
 									if (!torch::all(reswillwino.isfinite()).item().toBool()) {
