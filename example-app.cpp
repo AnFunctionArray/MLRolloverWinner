@@ -1945,7 +1945,7 @@ int main(int, char**) {
 
 								}
 								rfgrid[0].flatten()[indn] = float(predright);
-								wmsk[0].flatten()[indn] = float(vbal2);
+								wmsk[0].flatten()[indn] = (!fresir ? 1 : -1);
 
 								totrainl = torch::roll(totrainl, 1);
 
@@ -1960,7 +1960,7 @@ int main(int, char**) {
 									dobetr = !btrain;
 									needregen = vbal2 < 0;
 									tolrnll2 = abvsgrids.clone().detach();//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-									rfmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid() * ((wmsklst - wmsk) / 800.).sigmoid();//(rfgrid + 1.) / 2.;//((rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
+									rfmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid() * ((wmsklst.flatten().softmax(0).reshape_as(rfgrid) - wmsk.flatten().softmax(0).reshape_as(rfgrid)).sigmoid());//(rfgrid + 1.) / 2.;//((rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 									posmsk = torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									wmsklst = wmsk.clone().detach();
 									if (vbal2 < lstvbal2, 1) {
