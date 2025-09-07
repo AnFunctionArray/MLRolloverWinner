@@ -121,7 +121,7 @@ static float avm;
 static float avm2;
 static int betindex = 0;
 static bool betindexdir = 0;
-static torch::Tensor fwdhlbl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda().requires_grad_(false), fwdhlb2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), resall2o, resallo, reswillwino, reswillwino1, reswillwinotr,
+static torch::Tensor fwdhlbl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda().requires_grad_(false), fwdhlb2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), resall2o, resallo, reswillwino, reswillwino1, reswillwino1lst, reswillwinotr,
 fwdhlblout = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2o = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(),
 fwdhlbl2w = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2l = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbloutst = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
 static torch::Tensor reslst = torch::zeros({ 20,20 }).cuda();
@@ -395,6 +395,9 @@ static DWORD mainthreadid;
 static DWORD learnthreadid;
 static std::atomic_bool condtll3 = false, condtll4, divb = true;
 static int globaliters = 0;
+static float lstlsslst = 0;
+static float lstlsslstdif = 0;
+static float coefminbet = 0;
 std::atomic_bool condtll = false, trainedb = 0, trainedb2 = true, trainedb3 = true, trainedb4 = true, trainedb5 = true, hastrainedb = false, trainedba;
 static std::atomic_bool switchdir = false;
 static bool canchangeswitchdir = false;
@@ -1864,7 +1867,7 @@ int main(int, char**) {
 
 												float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
 												volatile float ch = ((float)numtrgtprob / 10000) * 100.;
-												//trainedb = 0;
+												trainedb = 0;
 												prabs[modes] = (float)actualpred;
 
 												int noncel;
@@ -1882,7 +1885,10 @@ int main(int, char**) {
 												volatile int numres, resir, fresir;
 
 												
-												volatile float betamntfl = trainedb ? (1. / 100.) * ((double)(orbal + rrbal) / 100000000.) : DEF_BET_AMNTF;
+												volatile float betamntfl = DEF_BET_AMNTF;//((double)(orbal + rrbal) / 100000000.) * coefminbet;
+												if (betamntfl < DEF_BET_AMNTF) {
+													betamntfl = DEF_BET_AMNTF;
+												}
 
 												if (REAL_BAL) {
 													fresir = dobet(wasab, betamntfl, ch, numres);
@@ -2274,6 +2280,9 @@ int main(int, char**) {
 												//rotarypos += 1;
 											//	continue;
 											//}
+											coefminbet = std::max(0.f, loss2.item().toFloat() - lstlsslst);
+											lstlsslstdif = loss2.item().toFloat() - lstlsslst;
+											lstlsslst = loss2.item().toFloat();
 
 											if (1) {
 
@@ -2315,15 +2324,17 @@ int main(int, char**) {
 												auto totrainllstlst = totrainllst.clone().detach();
 
 												abvsgridslst = abvsgrids.clone().detach();
-												
+												//if (lstlsslstdif < 0.)
 												abvsgrids = abvsgrids.flatten().toType(c10::ScalarType::Bool).bitwise_and(rfgridlst.flatten().flip(0).clone().detach().toType(c10::ScalarType::Bool)).bitwise_not().toType(c10::ScalarType::Float).flatten().flip(0).reshape_as(abvsgrids);
-												
+												rfgridlst = reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
 #if 1
 												test2->eval();
 												
 												auto [resallpr, reswillwinpr] = test2->forward(totrainllst, abvsgridslst, rfgridlst, fwdhlbl2, nullptr, 0);
 										
-												reswillwino = resallpr.squeeze(0).sigmoid().flatten(1);
+												reswillwino1lst = reswillwino1.defined() ? reswillwino1.clone().detach() : reswillwino1lst;
+												reswillwino1 = resallpr.squeeze(0).clone().detach();
+												reswillwino = reswillwino1.sigmoid().flatten(1);
 
 
 												if (!torch::all(reswillwino.isfinite()).item().toBool()) {
@@ -2467,7 +2478,8 @@ int main(int, char**) {
 											ss << "rrvbalmin " << rrbalminv << std::endl;
 											ss << "rrvbalmax " << rrbalmaxv << std::endl;
 											ss << "betsitesrmade400g " << betsitesrmade400g << std::endl;
-											ss << "lssdifg " << lssdifg << std::endl;											
+											ss << "lssdifg " << lssdifg << std::endl;	
+											ss << "lstlsslstdif " << lstlsslstdif << std::endl;
 										}
 										else {
 											itesrtrain += 1;
