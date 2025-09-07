@@ -284,7 +284,7 @@ torch::Tensor totrainl = torch::ones({ 1, 20, 20 }).cuda();
 torch::Tensor totrainllst = torch::zeros({ 1, 1, 20 }).cuda();
 torch::Tensor totraincur = torch::empty({}).cuda();
 torch::Tensor tolrnll2 = torch::zeros({ 1, 20, 20 }).cuda();
-torch::Tensor abvsgrids = torch::ones({ 1, 20, 20 }).cuda();
+torch::Tensor abvsgrids = torch::ones({ 1, 20, 20 }, dtype(torch::ScalarType::Int)).cuda();
 torch::Tensor abvsgridsvals = torch::zeros({ 1, 20, 20 }).to(dtype(torch::ScalarType::Int)).cuda();
 torch::Tensor abvsgridslst = torch::zeros({ 1, 20, 20 }).cuda();
 torch::Tensor totrainll = torch::ones({ 1, 20, 20 }).cuda();
@@ -1775,7 +1775,7 @@ int main(int, char**) {
 									bool zrgr = true;
 									bool btrain = false;
 									bool needregen = true;
-									torch::Tensor rfgrid = torch::zeros({ 1, 20, 20 }).cuda(), rfgridlst = torch::zeros({ 1, 20, 20 }).cuda(),
+									torch::Tensor rfgrid = torch::zeros({ 1, 20, 20 }, dtype(torch::ScalarType::Int)).cuda(), rfgridlst = torch::zeros({ 1, 20, 20 }).cuda(),
 										rfmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsklst = torch::zeros({ 1, 20, 20 }).cuda();
 
 									bool optsw = false;
@@ -1862,7 +1862,7 @@ int main(int, char**) {
 												bool actualpred = wasab;
 
 												float coef = reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0.5;
-												int numtrgt = 5000;//std::max(200, std::min((int)(10000 * coef), 9800));
+												int numtrgt = std::max(200, std::min((int)(10000 * coef), 9800));
 												int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
 
 												float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
@@ -1921,7 +1921,7 @@ int main(int, char**) {
 												rmaxbal = std::max(rrbal, rmaxbal).load();
 												rminbal = std::min(rrbal, rminbal).load();
 
-												vbal2 += (!fresir ? 1 : -1);
+												vbal2 += avret;//(!fresir ? 1 : -1);
 
 												vbal += (!fresir ? 1 : -1);
 
@@ -1942,7 +1942,7 @@ int main(int, char**) {
 												for (int y = 0; y < 1; ++y) {
 
 												}
-												rfgrid[0].flatten()[indn] = float(predright);
+												rfgrid[0].flatten()[indn] = numres;
 												wmsk[0].flatten()[indn] = float(vbal2);
 
 												totrainl = torch::roll(totrainl, 1);
@@ -1957,8 +1957,8 @@ int main(int, char**) {
 													btrain = totrainlm.defined();
 													dobetr = !btrain;
 													needregen = vbal2 < 0;
-													tolrnll2 = abvsgrids.clone().detach();//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-													rfmsk = ((rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
+													tolrnll2 = abvsgrids.bitwise_not().clone().detach().toType(c10::ScalarType::Float) / 10000.;//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
+													rfmsk = ((rfgrid * wmsk) / ((rfgrid - 9999).abs() * wmsklst + 1e-6)).sigmoid();
 													wmsklst = wmsk.clone().detach();
 													if (vbal2 < lstvbal2,1) {
 														//trainedb = betsitesrmade400g > 1;
@@ -2317,7 +2317,7 @@ int main(int, char**) {
 												runlr2 = runlrb2;
 												runlr3 = runlrb3;//0.00000166666 * loss2.item().toFloat();
 												runlradv = 100.;
-												rfgridlst = abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
+												rfgridlst = abvsgrids.bitwise_and(rfgrid.clone().detach());//rfgrid.clone().detach();
 
 												totrainllst = test2->mem.detach().clone();
 												
@@ -2325,8 +2325,8 @@ int main(int, char**) {
 
 												abvsgridslst = abvsgrids.clone().detach();
 												//if (lstlsslstdif < 0.)
-												abvsgrids = abvsgrids.flatten().toType(c10::ScalarType::Bool).bitwise_and(rfgridlst.flatten().flip(0).clone().detach().toType(c10::ScalarType::Bool)).bitwise_not().toType(c10::ScalarType::Float).flatten().flip(0).reshape_as(abvsgrids);
-												rfgridlst = reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
+												abvsgrids = abvsgrids.flatten().bitwise_and(rfgridlst.flatten().flip(0).clone().detach()).bitwise_not().flatten().flip(0).reshape_as(abvsgrids);
+												rfgridlst = reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst.bitwise_not().toType(c10::ScalarType::Float) / 10000.;//(tolrnll2 * rfmsk).clone().detach();
 #if 1
 												test2->eval();
 												
