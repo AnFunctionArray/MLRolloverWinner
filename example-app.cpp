@@ -1963,7 +1963,7 @@ int main(int, char**) {
 													dobetr = !btrain;
 													needregen = vbal2 < 0;
 													tolrnll2 = abvsgrids.clone().detach();//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-													rfmsk = ((rfgrid * wmsk) - ((rfgrid - 1.).abs() * wmsklst + 1e-6)).softmax(1);
+													rfmsk = ((rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 													wmsklst = wmsk.clone().detach();
 													if (vbal2 < lstvbal2,1) {
 														//trainedb = betsitesrmade400g > 1;
