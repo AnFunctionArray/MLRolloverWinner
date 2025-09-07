@@ -227,18 +227,19 @@ struct RotaryPositionalEmbeddingsImpl : torch::nn::Cloneable<RotaryPositionalEmb
 TORCH_MODULE(RotaryPositionalEmbeddings);
 static int64_t rotarypos = 0;
 torch::Tensor hybrid_loss(
-	torch::Tensor model_output,      
-	torch::Tensor sl_target,        
-	torch::Tensor validation_matrix 
+	torch::Tensor model_output,
+	torch::Tensor sl_target,
+	torch::Tensor validation_matrix,
+	torch::Tensor pos_msk
 ) {
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, validation_matrix
-
+		sl_target, validation_matrix,
+		pos_msk
 	);
 
-	float lambda = 0.5; 
+	float lambda = 0.5;
 	return sl_loss;
 }
 
@@ -811,7 +812,7 @@ struct Net2Impl : NetImpl {
 			out0[0] = inputl;
 
 		}
-		
+
 		return { torch::stack(out0).cuda(), torch::stack(out1).cuda() };
 	}
 
@@ -949,7 +950,7 @@ static float betamntft = ((double)betamnt / 100000000);
 
 
 
-int dobet(bool above, float amnt, float ch, volatile int &resnum) {
+int dobet(bool above, float amnt, float ch, volatile int& resnum) {
 	STARTUPINFO si;
 	ZeroMemory(&si, sizeof(STARTUPINFO));
 	si.cb = sizeof(si);
@@ -983,7 +984,7 @@ int dobet(bool above, float amnt, float ch, volatile int &resnum) {
 	chm.resize(5);
 
 
-		args += " " + chm;
+	args += " " + chm;
 
 	args += " ";
 	args += std::to_string(amnt) + "";
@@ -1007,7 +1008,7 @@ int dobet(bool above, float amnt, float ch, volatile int &resnum) {
 	}
 	ReadFile(g_hChildStd_OUT_Rd, chBuf, 260, NULL, NULL);
 	std::stringstream sstream(std::string{ chBuf });
-	sstream >> (int &)resnum;
+	sstream >> (int&)resnum;
 	requests -= 1;
 
 	CloseHandle(g_hChildStd_OUT_Rd);
@@ -1500,1036 +1501,1039 @@ int main(int, char**) {
 
 
 
-				
 
-					torch::Tensor fwdhlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
 
-					
-
-					toinfer = torch::ones({ 20, 20 }).cuda();
-					toinferm = torch::ones({ N_MODES, 20, 20 }).cuda();
-					toinferm2 = torch::ones({ N_MODES, 20, 20 }, c10::ScalarType::Long).cuda();
-					toinfermi = torch::ones({ N_MODES, 20, 20 }, c10::ScalarType::Long).cuda();
-					toinfero = torch::ones({ N_MODES, 20, 20 }).cuda();
-					toinferin = torch::zeros({ 20, 20 }).cuda();
-					tolrn = torch::ones({ 20, 20 }).cuda();
-					totrain = torch::ones({ 20, 20 }).cuda();
-					totrainto = torch::ones({ 20, 20 }).cuda();
-					static torch::Tensor totrainldummy = torch::ones({ 20, 20 }).cuda();
-					totrain /= 10;
-					totrainto /= 10;
-					totrainldummy /= 10;
-					tolrn /= 10;
-					toinfer /= 10;
-					tolrn3sz /= 2.;
-
-					for (int x = 0; x < 20; ++x)
-						for (int y = 0; y < 20; ++y) {
-							toinfer[x][y] = y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.;//0.0;//0.1;//(y + x * 20) / 400.;//y / 20.;//(y + x * 20) / 400.;//(y + x * 20) / 400.;// 0.1;
-							for (int i = 0; i < N_MODES; ++i)
-								toinferm[i][x][y] = y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.,//;//0.0;//0.1;//(y + x * 20) / 400.;//y / 20.;//(y + x * 20) / 400.;//(y + x * 20) / 400.;// 0.1;
-								toinfero[i][x][y] = y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.,
-								toinfermi[i][x][y] = y + x * 20 + 1;//(y + x * 20) < 200 ? ((y + x * 20) % 200) : (199 - ((y + x * 20) % 200));//y + x * 20;
-
-							//toinfero[x][y] = 0.1;//(y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.);//(y + x * 20) / 400.;
-							tolrn[x][y] = 0.1;//y < 10 ? 0.1 : 0.0;//0.1;//y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.;//y < 10 ? 0.1 : 0.0;//y < 10 ? 0.1 : 0.0;//(y % 10) / 10. : (9 - (y % 10)) / 10.;//(y + x * 20) / 400.;//(y % 10) / 10.;
-							tolrn0[x][y] = 0.1;//y < 10 ? 0.1 : 0.0;
-							tolrn1[x][y] = (y + x * 20) / 400.;
-							tolrn3[x][y] = (y % 10) / 10.;
-						}
-					for (int i = 0; i < 20; ++i) {
-						toinfermii[i][0] = i;
-						toinfermii[i][1] = 10;
-					}
-					torch::nn::init::xavier_uniform_(toinferm);
-					toinferm.zero_();
-
-					toinfermio2 = toinfermi.clone().detach();
-					toinfermi2 = toinfermi.clone().detach();
-					//torch::nn::init::xavier_uniform_(toinfero);
-					//toinferm.uniform_();
-					toinfero = toinferm.clone().cuda();
-					totrainl = toinferm.clone().cuda();
-					totrainl = torch::ones(toinferm.sizes()).cuda();
-					totrainll = torch::ones(toinferm.sizes()).cuda();
-					totrainlw = torch::ones(toinferm.sizes()).cuda();
-					
-
-					totrainl = (totrainlw - totrainll).abs().clone().detach();
-					//toinferm2 = toinferm.clone().cuda();
-					//toinferm2.zero_();
-					toinferm3 = torch::zeros({ N_MODES, 20, 20 }).cuda();//toinferm.clone().cuda();
-					toinferm3mask = torch::zeros({ N_MODES, 20, 20 }).cuda();
-					toinferm3r = torch::zeros({ N_MODES, 20, 20 }).cuda();
-					toinferm4 = torch::zeros({ N_MODES, 20, 20 }).cuda();
-					//toinferm3.zero_();
-					tolrnl = toinfer.clone().cuda();//torch::ones({ 20, 20 }).cuda();//tolrn.clone().cuda();
-					tolrnl2 = torch::zeros({ 1, 20, 20 }).cuda();//toinferm.clone().cuda();
-					tolrnl2m = torch::tensor({}).cuda();
-					toinferlost = toinfer.clone().cuda();
-					toinferwon = toinfer.clone().cuda();
-					toinferlst = toinfero.clone().cuda();
+		torch::Tensor fwdhlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
 
 
 
-					torch::Tensor lstinp = torch::zeros({ 24 }).cuda();
-					torch::Tensor lstinp2 = torch::ones({ 20 }).cuda();
-					torch::Tensor lstinpr = torch::ones({ 20 }).cuda();
-					torch::Tensor lstinpri = torch::ones({ 20 }).cuda();
-					torch::Tensor lstinpalt = torch::ones({ 20 }).cuda();
-					torch::Tensor lstinptotrain = torch::ones({ 20 }).cuda();
+		toinfer = torch::ones({ 20, 20 }).cuda();
+		toinferm = torch::ones({ N_MODES, 20, 20 }).cuda();
+		toinferm2 = torch::ones({ N_MODES, 20, 20 }, c10::ScalarType::Long).cuda();
+		toinfermi = torch::ones({ N_MODES, 20, 20 }, c10::ScalarType::Long).cuda();
+		toinfero = torch::ones({ N_MODES, 20, 20 }).cuda();
+		toinferin = torch::zeros({ 20, 20 }).cuda();
+		tolrn = torch::ones({ 20, 20 }).cuda();
+		totrain = torch::ones({ 20, 20 }).cuda();
+		totrainto = torch::ones({ 20, 20 }).cuda();
+		static torch::Tensor totrainldummy = torch::ones({ 20, 20 }).cuda();
+		totrain /= 10;
+		totrainto /= 10;
+		totrainldummy /= 10;
+		tolrn /= 10;
+		toinfer /= 10;
+		tolrn3sz /= 2.;
 
-					ComPtr<ID3D12Resource> m_vertexBuffer;
-					ComPtr<ID3D12Resource> m_indexBuffer;
+		for (int x = 0; x < 20; ++x)
+			for (int y = 0; y < 20; ++y) {
+				toinfer[x][y] = y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.;//0.0;//0.1;//(y + x * 20) / 400.;//y / 20.;//(y + x * 20) / 400.;//(y + x * 20) / 400.;// 0.1;
+				for (int i = 0; i < N_MODES; ++i)
+					toinferm[i][x][y] = y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.,//;//0.0;//0.1;//(y + x * 20) / 400.;//y / 20.;//(y + x * 20) / 400.;//(y + x * 20) / 400.;// 0.1;
+					toinfero[i][x][y] = y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.,
+					toinfermi[i][x][y] = y + x * 20 + 1;//(y + x * 20) < 200 ? ((y + x * 20) % 200) : (199 - ((y + x * 20) % 200));//y + x * 20;
 
-					static int ind = 0, ind1 = 0;
+				//toinfero[x][y] = 0.1;//(y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.);//(y + x * 20) / 400.;
+				tolrn[x][y] = 0.1;//y < 10 ? 0.1 : 0.0;//0.1;//y < 10 ? (y % 10) / 10. : (9 - (y % 10)) / 10.;//y < 10 ? 0.1 : 0.0;//y < 10 ? 0.1 : 0.0;//(y % 10) / 10. : (9 - (y % 10)) / 10.;//(y + x * 20) / 400.;//(y % 10) / 10.;
+				tolrn0[x][y] = 0.1;//y < 10 ? 0.1 : 0.0;
+				tolrn1[x][y] = (y + x * 20) / 400.;
+				tolrn3[x][y] = (y % 10) / 10.;
+			}
+		for (int i = 0; i < 20; ++i) {
+			toinfermii[i][0] = i;
+			toinfermii[i][1] = 10;
+		}
+		torch::nn::init::xavier_uniform_(toinferm);
+		toinferm.zero_();
 
-					ID3D12CommandList* ppCommandLists[1];
-
-					int trtbal = 0;
-
-
-					bool end = false;
-					int itersend = 0;
-
-					int testi = 0;
-					std::atomic_int64_t iter = 1;
-					std::atomic_int64_t curiter = 1;
-					bool inited = false;
-					int lstresi = -1;
-
-					std::atomic_int iiters = 0;
-
-					std::atomic<float> lossf;
-
-
-					float mul = 1.0;
-					static double lr = 0.0000002;//1. / 500000000; /// 500000000.;
-					static double wd = 0.0002;//0.0000002 //0.0002
-					lr = wd;
-					lrf = wd;
-					torch::Tensor loss = torch::empty({ 1 }).cuda();
-					bool donetrain = false;
-					torch::autograd::variable_list grads;
+		toinfermio2 = toinfermi.clone().detach();
+		toinfermi2 = toinfermi.clone().detach();
+		//torch::nn::init::xavier_uniform_(toinfero);
+		//toinferm.uniform_();
+		toinfero = toinferm.clone().cuda();
+		totrainl = toinferm.clone().cuda();
+		totrainl = torch::ones(toinferm.sizes()).cuda();
+		totrainll = torch::ones(toinferm.sizes()).cuda();
+		totrainlw = torch::ones(toinferm.sizes()).cuda();
 
 
-					std::unique_ptr<torch::optim::Optimizer> optim[4]{};
-					std::function<torch::optim::Optimizer* ()> factories[] = {
-						[&] {
-						
-							return nullptr;
-							},
-							[&] {
-							return new torch::optim::NAdam(test2->param_groups);// new torch::optim::SGD(testtb->parameters(), torch::optim::SGDOptions{wd});//torch::optim::SGD(testtb->parameters(), torch::optim::SGDOptions{wd});//torch::optim::Adagrad(testtb->parameters(), torch::optim::AdagradOptions{wd});//NAdam(test->parameters(), torch::optim::NAdamOptions{1.}.weight_decay(1.));
-							},
+		totrainl = (totrainlw - totrainll).abs().clone().detach();
+		//toinferm2 = toinferm.clone().cuda();
+		//toinferm2.zero_();
+		toinferm3 = torch::zeros({ N_MODES, 20, 20 }).cuda();//toinferm.clone().cuda();
+		toinferm3mask = torch::zeros({ N_MODES, 20, 20 }).cuda();
+		toinferm3r = torch::zeros({ N_MODES, 20, 20 }).cuda();
+		toinferm4 = torch::zeros({ N_MODES, 20, 20 }).cuda();
+		//toinferm3.zero_();
+		tolrnl = toinfer.clone().cuda();//torch::ones({ 20, 20 }).cuda();//tolrn.clone().cuda();
+		tolrnl2 = torch::zeros({ 1, 20, 20 }).cuda();//toinferm.clone().cuda();
+		tolrnl2m = torch::tensor({}).cuda();
+		toinferlost = toinfer.clone().cuda();
+		toinferwon = toinfer.clone().cuda();
+		toinferlst = toinfero.clone().cuda();
+
+
+
+		torch::Tensor lstinp = torch::zeros({ 24 }).cuda();
+		torch::Tensor lstinp2 = torch::ones({ 20 }).cuda();
+		torch::Tensor lstinpr = torch::ones({ 20 }).cuda();
+		torch::Tensor lstinpri = torch::ones({ 20 }).cuda();
+		torch::Tensor lstinpalt = torch::ones({ 20 }).cuda();
+		torch::Tensor lstinptotrain = torch::ones({ 20 }).cuda();
+
+		ComPtr<ID3D12Resource> m_vertexBuffer;
+		ComPtr<ID3D12Resource> m_indexBuffer;
+
+		static int ind = 0, ind1 = 0;
+
+		ID3D12CommandList* ppCommandLists[1];
+
+		int trtbal = 0;
+
+
+		bool end = false;
+		int itersend = 0;
+
+		int testi = 0;
+		std::atomic_int64_t iter = 1;
+		std::atomic_int64_t curiter = 1;
+		bool inited = false;
+		int lstresi = -1;
+
+		std::atomic_int iiters = 0;
+
+		std::atomic<float> lossf;
+
+
+		float mul = 1.0;
+		static double lr = 0.0000002;//1. / 500000000; /// 500000000.;
+		static double wd = 0.0002;//0.0000002 //0.0002
+		lr = wd;
+		lrf = wd;
+		torch::Tensor loss = torch::empty({ 1 }).cuda();
+		bool donetrain = false;
+		torch::autograd::variable_list grads;
+
+
+		std::unique_ptr<torch::optim::Optimizer> optim[4]{};
+		std::function<torch::optim::Optimizer* ()> factories[] = {
+			[&] {
+
+				return nullptr;
+				},
+				[&] {
+				return new torch::optim::NAdam(test2->param_groups);// new torch::optim::SGD(testtb->parameters(), torch::optim::SGDOptions{wd});//torch::optim::SGD(testtb->parameters(), torch::optim::SGDOptions{wd});//torch::optim::Adagrad(testtb->parameters(), torch::optim::AdagradOptions{wd});//NAdam(test->parameters(), torch::optim::NAdamOptions{1.}.weight_decay(1.));
+				},
+		};
+
+		optim[0] = std::unique_ptr<torch::optim::Optimizer>(factories[0]());
+		optim[1] = std::unique_ptr<torch::optim::Optimizer>(factories[1]());
+
+
+
+		float yieldav = 0.;
+
+		bool dir = true;
+		bool first = true;
+		int resicur = -1;
+		float lstlss = FLT_MAX;
+		float curlss = 0.;
+		float intlss = 0.;
+		float lssdiff = 0.0;
+		bool lstres = false;
+		std::atomic_bool condt = false, condt1 = false, condt2 = false, condt2done = false, condtl = false;
+		std::condition_variable condtlv;
+		std::mutex condtlm;
+
+		bool pseudoswitchl = false;
+		bool switchswitchl = false;
+
+		bool condswap = false, resmcondswap = false;
+		float resm = 0.0;
+		double condtlst = NAN;
+		int itersb = 0;
+		uint64_t itersy = 1;
+		uint64_t itersx = 0;
+		std::atomic_int64_t itersz = 0;
+		uint64_t iterszlst = 0;
+		uint64_t distmbl = 0;
+		uint64_t lstseed = 1;
+		bool lstabove = false;
+
+		static torch::Tensor totrainback = torch::tensor({ 0 }).cuda();
+		static torch::Tensor restotrain = torch::tensor({ 0 }).cuda();
+		static torch::Tensor totrain1 = torch::tensor({ 0 }).cuda();
+		static torch::Tensor totrain2 = torch::tensor({ 0 }).cuda();
+
+
+		static torch::Tensor totraintoalt = torch::tensor({ 0 }).cuda();
+		static torch::Tensor totrainalt = torch::tensor({ 0 }).cuda();
+
+		bool train10 = false;
+		uint64_t ntrain = 0;
+		static int iters = 0;
+		static std::atomic_bool lost_mode = false;
+		static torch::Tensor trainhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		static torch::Tensor trainhln = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		static torch::Tensor trainhl2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor ntrainhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor fwdhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor fwdhlrn = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor lstgood = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor hl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor hlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor hlrn = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		const torch::Tensor hlzero = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+
+		lstrnntrainh = torch::zeros({ 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor trainhlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+
+		savestuff = [&](bool sv, const torch::nn::Module& net, const char* name) {//itersx > 4) {
+
+			std::ofstream ifb("bal.txt");
+			ifb << (orbal + rrbal) / 100000000. << std::endl;
+			ifb << std::max(ormaxbal, rmaxbal.load()) / 100000000. << std::endl;
+			ifb << std::min(orminbal, rminbal.load()) / 100000000. << std::endl;
+			ifb << std::max(orminbalahead, (std::abs(rminbal.load()) / 100000000.) / (std::max(orbal, orbal + rrbal) / 100000000.)) << std::endl;
+			ifb << +nonce << std::endl;
+			ifb << serverSeed << std::endl;
+			ifb << clientSeed << std::endl;
+			ifb << serverSeedlspec << std::endl;
+			ifb << globaliters << std::endl;
+			ifb << rolllosti << std::endl;
+
+			return;
+
+			};
+
+
+
+
+		while (true) try {
+
+#if 1
+			const UINT64 fence = m_fenceValue;
+			m_commandQueue->Signal(m_fence.Get(), fence);
+
+			m_fenceValue++;
+
+			// Wait until the previous frame is finished.
+			if (m_fence->GetCompletedValue() < fence)
+			{
+				m_fence->SetEventOnCompletion(fence, m_fenceEvent);
+				WaitForSingleObject(m_fenceEvent, INFINITE);
+			}
+#endif
+
+
+
+			auto dobetl2 = [&]() {
+				static torch::Tensor loss2 = torch::empty({});
+				static int itesrtrain = 0, itesrtraing = 0;
+				static float lss2min;
+				auto wcopy = [](torch::Tensor& w, const torch::Tensor& w1, double decay) {
+
+					w.set_data(w1.data().clone().detach().cuda());
+
 					};
 
-					optim[0] = std::unique_ptr<torch::optim::Optimizer>(factories[0]());
-					optim[1] = std::unique_ptr<torch::optim::Optimizer>(factories[1]());
+				dobetr = 1;
 
+				if (std::filesystem::exists("test2.pt"))
+					torch::load(test2, "test2.pt");
+				if (std::filesystem::exists("fwdhlbl2.pt"))
+					torch::load(fwdhlbl2, "fwdhlbl2.pt");
+				if (std::filesystem::exists("totrainlm.pt") && std::filesystem::exists("tolrnl52m.pt")) {
+					torch::load(totrainlm, "totrainlm.pt");
+					torch::load(tolrnl52m, "tolrnl52m.pt");
+					dobetr = false;
 
+				}
 
-					float yieldav = 0.;
+				totrainl.zero_();
+				totrainl[0][0][0] = 1.;
 
-					bool dir = true;
-					bool first = true;
-					int resicur = -1;
-					float lstlss = FLT_MAX;
-					float curlss = 0.;
-					float intlss = 0.;
-					float lssdiff = 0.0;
-					bool lstres = false;
-					std::atomic_bool condt = false, condt1 = false, condt2 = false, condt2done = false, condtl = false;
-					std::condition_variable condtlv;
-					std::mutex condtlm;
+				static int rightiw = 0;
+				static int leftiw = -1;
+				static int rightil = 0;
+				static int leftil = -1;
+				static int xorab = 0;
 
-					bool pseudoswitchl = false;
-					bool switchswitchl = false;
+				torch::nn::init::xavier_uniform_(fwdhlbl2);
 
-					bool condswap = false, resmcondswap = false;
-					float resm = 0.0;
-					double condtlst = NAN;
-					int itersb = 0;
-					uint64_t itersy = 1;
-					uint64_t itersx = 0;
-					std::atomic_int64_t itersz = 0;
-					uint64_t iterszlst = 0;
-					uint64_t distmbl = 0;
-					uint64_t lstseed = 1;
-					bool lstabove = false;
+				if (itesr == 99, vbal2pa > 0, ((vbal2s[-2][0] > vbal2s[-3][0]).item().toBool()), 1) {
+					for (int i = 0; i < 1; ++i) {
+						float vbaldist = std::abs(vbalmin) + std::abs(vbalmax);
+						float vbalceofcur = vbal + std::abs(vbalmin);
 
-					static torch::Tensor totrainback = torch::tensor({ 0 }).cuda();
-					static torch::Tensor restotrain = torch::tensor({ 0 }).cuda();
-					static torch::Tensor totrain1 = torch::tensor({ 0 }).cuda();
-					static torch::Tensor totrain2 = torch::tensor({ 0 }).cuda();
+						vbalceofcur /= vbaldist;
 
+						test2->train();
 
-					static torch::Tensor totraintoalt = torch::tensor({ 0 }).cuda();
-					static torch::Tensor totrainalt = torch::tensor({ 0 }).cuda();
+						float startinlss = 0.;
+						float lssdif = 0.;
+						float lstlssdif = 0.;
+						float lssdiftrgt = 1e-5;
+						bool zrgr = true;
+						bool btrain = false;
+						bool needregen = true;
+						torch::Tensor rfgrid = torch::zeros({ 1, 20, 20 }).cuda(), rfgridlst = torch::zeros({ 1, 20, 20 }).cuda(),
+							rfmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsklst = torch::zeros({ 1, 20, 20 }).cuda(),
+							posmsk = torch::zeros({ 1, 20, 20 }).cuda();
 
-					bool train10 = false;
-					uint64_t ntrain = 0;
-					static int iters = 0;
-					static std::atomic_bool lost_mode = false;
-					static torch::Tensor trainhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					static torch::Tensor trainhln = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					static torch::Tensor trainhl2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					torch::Tensor ntrainhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					torch::Tensor fwdhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					torch::Tensor fwdhlrn = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					torch::Tensor lstgood = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					torch::Tensor hl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					torch::Tensor hlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					torch::Tensor hlrn = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-					const torch::Tensor hlzero = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+						bool optsw = false;
+						betsitesrmade = 0;
 
-					lstrnntrainh = torch::zeros({ 2, 2 * 6, 20, 20 }).cuda();
-					torch::Tensor trainhlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+						runlr = runlrb;//0.05;//0.00000166666 * loss2.item().toFloat();
+						runlr2 = runlrb2;
+						runlr3 = runlrb3;
 
-					savestuff = [&](bool sv, const torch::nn::Module& net, const char* name) {//itersx > 4) {
+						smpl->train();
 
-						std::ofstream ifb("bal.txt");
-						ifb << (orbal + rrbal) / 100000000. << std::endl;
-						ifb << std::max(ormaxbal, rmaxbal.load()) / 100000000. << std::endl;
-						ifb << std::min(orminbal, rminbal.load()) / 100000000. << std::endl;
-						ifb << std::max(orminbalahead, (std::abs(rminbal.load()) / 100000000.) / (std::max(orbal, orbal + rrbal) / 100000000.)) << std::endl;
-						ifb << +nonce << std::endl;
-						ifb << serverSeed << std::endl;
-						ifb << clientSeed << std::endl;
-						ifb << serverSeedlspec << std::endl;
-						ifb << globaliters << std::endl;
-						ifb << rolllosti << std::endl;
+						auto sctpt = torch::ScalarType::Float;
+						torch::Tensor x = torch::zeros({ test2->nels }).to(device).to(dtype(sctpt));//test2->gather_flat_grad().to(device);//torch::zeros({ N_elements }).to(optionst);
+						torch::Tensor g = torch::zeros({ test2->nels }).to(device).to(dtype(sctpt));//test2->gather_flat_grad().to(device);//torch::zeros({ test2->nels }).to(device);
+						torch::Tensor xl = torch::zeros({ test2->nels }).to(device).to(dtype(sctpt));
+						torch::Tensor xu = torch::zeros({ test2->nels }).to(device).to(dtype(sctpt));
+						torch::Tensor nbd = torch::zeros({ test2->nels }).to(dtype(torch::ScalarType::Int)).to(device);
+						do {
+							static std::mutex trainm;
+							std::unique_lock lk(trainm);
+							static bool sttteed = 0;
+							static int sttteediters = 0;
+							static bool sttteedorig = false;
+							static bool lststalled = false;
+							static bool minned = false;
+							static bool xavsetted = false;
+							static int nonminned = false;
+							static bool stalled = false;
+							bool lststtteed = sttteed;
+							bool lststc = false;
+							static bool fsw = true;
+							static bool wasminned = false;
+							static int waschanged = 0;
+							static bool wassw = false;
+							static int currmdl = 0;
+							static bool orand = false;
 
-						return;
+							int ierstr = 0;
 
-						};
+							if (itesrtrain == 0) {
+								sttteed = false;
 
+								optsw = false;
+								wasminned = false;
+								waschanged = 0;
 
-
-
-					while (true) try {
-						
-#if 1
-						const UINT64 fence = m_fenceValue;
-						m_commandQueue->Signal(m_fence.Get(), fence);
-
-						m_fenceValue++;
-
-						// Wait until the previous frame is finished.
-						if (m_fence->GetCompletedValue() < fence)
-						{
-							m_fence->SetEventOnCompletion(fence, m_fenceEvent);
-							WaitForSingleObject(m_fenceEvent, INFINITE);
-						}
-#endif
-
-
-
-						auto dobetl2 = [&]() {
-							static torch::Tensor loss2 = torch::empty({});
-							static int itesrtrain = 0, itesrtraing = 0;
-							static float lss2min;
-							auto wcopy = [](torch::Tensor& w, const torch::Tensor& w1, double decay) {
-								
-								w.set_data(w1.data().clone().detach().cuda());
-
-								};
-
-							dobetr = 1;
-
-							if (std::filesystem::exists("test2.pt"))
-								torch::load(test2, "test2.pt");
-							if (std::filesystem::exists("fwdhlbl2.pt"))
-								torch::load(fwdhlbl2, "fwdhlbl2.pt");
-							if (std::filesystem::exists("totrainlm.pt") && std::filesystem::exists("tolrnl52m.pt")) {
-								torch::load(totrainlm, "totrainlm.pt");
-								torch::load(tolrnl52m, "tolrnl52m.pt");
-								dobetr = false;
+								lss2min = FLT_MAX;
+								losslstg = FLT_MAX;
+								losslstgr = FLT_MAX;
+								losslstgor = FLT_MAX;
+								lststalled = false;
+								minned = false;
+								stalled = false;
+								xavsetted = false;
+								nonminned = 0;
+								sttteediters = 0;
+								lssdiftrgt = 1e-5;
+								fsw = true;
+								optim[1]->param_groups()[0].options().set_lr(runlr);
+								dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100.);
+								optim[1]->param_groups()[1].options().set_lr(runlr2);
+								dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100.);
+								optim[1]->param_groups()[2].options().set_lr(runlr3);
+								dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100.);
 
 							}
 
-							totrainl.zero_();
-							totrainl[0][0][0] = 1.;
 
-							static int rightiw = 0;
-							static int leftiw = -1;
-							static int rightil = 0;
-							static int leftil = -1;
-							static int xorab = 0;
 
-							torch::nn::init::xavier_uniform_(fwdhlbl2);
+							if (dobetr) {
+								if (betsitesrmade == 0) {
 
-							if (itesr == 99, vbal2pa > 0, ((vbal2s[-2][0] > vbal2s[-3][0]).item().toBool()), 1) {
-								for (int i = 0; i < 1; ++i) {
-									float vbaldist = std::abs(vbalmin) + std::abs(vbalmax);
-									float vbalceofcur = vbal + std::abs(vbalmin);
+									//torch::save(test2, "test2.pt");
 
-									vbalceofcur /= vbaldist;
+								}
 
-									test2->train();
-
-									float startinlss = 0.;
-									float lssdif = 0.;
-									float lstlssdif = 0.;
-									float lssdiftrgt = 1e-5;
-									bool zrgr = true;
-									bool btrain = false;
-									bool needregen = true;
-									torch::Tensor rfgrid = torch::zeros({ 1, 20, 20 }).cuda(), rfgridlst = torch::zeros({ 1, 20, 20 }).cuda(),
-										rfmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsklst = torch::zeros({ 1, 20, 20 }).cuda();
-
-									bool optsw = false;
-									betsitesrmade = 0;
-
-									runlr = runlrb;//0.05;//0.00000166666 * loss2.item().toFloat();
-									runlr2 = runlrb2;
-									runlr3 = runlrb3;
-
-									smpl->train();
-
-									auto sctpt = torch::ScalarType::Float;
-									torch::Tensor x = torch::zeros({ test2->nels }).to(device).to(dtype(sctpt));//test2->gather_flat_grad().to(device);//torch::zeros({ N_elements }).to(optionst);
-									torch::Tensor g = torch::zeros({ test2->nels }).to(device).to(dtype(sctpt));//test2->gather_flat_grad().to(device);//torch::zeros({ test2->nels }).to(device);
-									torch::Tensor xl = torch::zeros({ test2->nels }).to(device).to(dtype(sctpt));
-									torch::Tensor xu = torch::zeros({ test2->nels }).to(device).to(dtype(sctpt));
-									torch::Tensor nbd = torch::zeros({ test2->nels }).to(dtype(torch::ScalarType::Int)).to(device);
-									do {
-										static std::mutex trainm;
-										std::unique_lock lk(trainm);
-										static bool sttteed = 0;
-										static int sttteediters = 0;
-										static bool sttteedorig = false;
-										static bool lststalled = false;
-										static bool minned = false;
-										static bool xavsetted = false;
-										static int nonminned = false;
-										static bool stalled = false;
-										bool lststtteed = sttteed;
-										bool lststc = false;
-										static bool fsw = true;
-										static bool wasminned = false;
-										static int waschanged = 0;
-										static bool wassw = false;
-										static int currmdl = 0;
-										static bool orand = false;
-
-										int ierstr = 0;
-
-										if (itesrtrain == 0) {
-											sttteed = false;
-
-											optsw = false;
-											wasminned = false;
-											waschanged = 0;
-
-											lss2min = FLT_MAX;
-											losslstg = FLT_MAX;
-											losslstgr = FLT_MAX;
-											losslstgor = FLT_MAX;
-											lststalled = false;
-											minned = false;
-											stalled = false;
-											xavsetted = false;
-											nonminned = 0;
-											sttteediters = 0;
-											lssdiftrgt = 1e-5;
-											fsw = true;
-											optim[1]->param_groups()[0].options().set_lr(runlr);
-											dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100.);
-											optim[1]->param_groups()[1].options().set_lr(runlr2);
-											dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100.);
-											optim[1]->param_groups()[2].options().set_lr(runlr3);
-											dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100.);
-											
-										}
+								sttteed = false;
 
 
 
-										if (dobetr) {
-											if (betsitesrmade == 0) {
+								auto indn = (totrainl.flatten().argmax().item().toInt() + 0) % 400;
+								volatile bool wasab = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
 
-												//torch::save(test2, "test2.pt");
+								bool actualpred = wasab;
 
-											}
+								float coef = reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0.5;
+								int numtrgt = 5000;//std::max(200, std::min((int)(10000 * coef), 9800));
+								int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
 
-												sttteed = false;
+								float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
+								volatile float ch = ((float)numtrgtprob / 10000) * 100.;
+								trainedb = 0;
+								prabs[modes] = (float)actualpred;
 
+								int noncel;
+								std::string serverSeedl, clientSeedl;
 
+								{
+									std::unique_lock lkn{ incnonce };
+									noncel = nonce;
+									nonce += 1;
+									serverSeedl = serverSeed;
+									clientSeedl = clientSeed;
 
-												auto indn = (totrainl.flatten().argmax().item().toInt() + 0) % 400;
-												volatile bool wasab = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
+								}
 
-												bool actualpred = wasab;
-
-												float coef = reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0.5;
-												int numtrgt = 5000;//std::max(200, std::min((int)(10000 * coef), 9800));
-												int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
-
-												float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
-												volatile float ch = ((float)numtrgtprob / 10000) * 100.;
-												trainedb = 0;
-												prabs[modes] = (float)actualpred;
-
-												int noncel;
-												std::string serverSeedl, clientSeedl;
-
-												{
-													std::unique_lock lkn{ incnonce };
-													noncel = nonce;
-													nonce += 1;
-													serverSeedl = serverSeed;
-													clientSeedl = clientSeed;
-
-												}
-
-												volatile int numres, resir, fresir;
-
-												
-												volatile float betamntfl = DEF_BET_AMNTF;//((double)(orbal + rrbal) / 100000000.) * coefminbet;
-												if (betamntfl < DEF_BET_AMNTF) {
-													betamntfl = DEF_BET_AMNTF;
-												}
-
-												if (REAL_BAL) {
-													fresir = dobet(wasab, betamntfl, ch, numres);
-													resir = !((numres > 4999) == !!actualpred);
-												}
-												else {
-													numres = getRoll(serverSeedl, clientSeedl, noncel);
-													resir = !((numres > 4999) == !!actualpred);
-													fresir = wasab ? !((numres > numtrgt - 1)) : !((numres < numtrgt));
-												}
+								volatile int numres, resir, fresir;
 
 
-												
+								volatile float betamntfl = DEF_BET_AMNTF;//((double)(orbal + rrbal) / 100000000.) * coefminbet;
+								if (betamntfl < DEF_BET_AMNTF) {
+									betamntfl = DEF_BET_AMNTF;
+								}
 
-												if (!fresir && reswillwino.defined()) {
-													itesrwin += 1;
-													acccoef += reswillwino[0][indn].item().toFloat();
-												}
-												if (trainedb) {
-													rrbalv += ((actualdir4 ? !fresir : fresir) ? 1 : -1);
-													rrbalmaxv = std::max(rrbalmaxv, rrbalv).load();
-													rrbalminv = std::min(rrbalminv, rrbalv).load();
-
-
-												}
-
-												float avret = !fresir ? mul - 1. : -1.;
-												rrbal += betamntfl * 100000000 * avret;
-											
-												rmaxbal = std::max(rrbal, rmaxbal).load();
-												rminbal = std::min(rrbal, rminbal).load();
-
-												vbal2 += (!fresir ? 1 : -1);
-
-												vbal += (!fresir ? 1 : -1);
-
-
-												savestuff(false, *test2, 0);
+								if (REAL_BAL) {
+									fresir = dobet(wasab, betamntfl, ch, numres);
+									resir = !((numres > 4999) == !!actualpred);
+								}
+								else {
+									numres = getRoll(serverSeedl, clientSeedl, noncel);
+									resir = !((numres > 4999) == !!actualpred);
+									fresir = wasab ? !((numres > numtrgt - 1)) : !((numres < numtrgt));
+								}
 
 
 
-												bool predright = !resir ? actualpred : !actualpred;
 
-												bool needchg = false;
+								if (!fresir && reswillwino.defined()) {
+									itesrwin += 1;
+									acccoef += reswillwino[0][indn].item().toFloat();
+								}
+								if (trainedb) {
+									rrbalv += ((actualdir4 ? !fresir : fresir) ? 1 : -1);
+									rrbalmaxv = std::max(rrbalmaxv, rrbalv).load();
+									rrbalminv = std::min(rrbalminv, rrbalv).load();
+
+
+								}
+
+								float avret = !fresir ? mul - 1. : -1.;
+								rrbal += betamntfl * 100000000 * avret;
+
+								rmaxbal = std::max(rrbal, rmaxbal).load();
+								rminbal = std::min(rrbal, rminbal).load();
+
+								vbal2 += (!fresir ? 1 : -1);
+
+								vbal += (!fresir ? 1 : -1);
+
+
+								savestuff(false, *test2, 0);
 
 
 
-												betsitesrmade += 1;
+								bool predright = !resir ? actualpred : !actualpred;
+
+								bool needchg = false;
 
 
-												for (int y = 0; y < 1; ++y) {
 
-												}
-												rfgrid[0].flatten()[indn] = float(predright);
-												wmsk[0].flatten()[indn] = float(vbal2);
+								betsitesrmade += 1;
 
-												totrainl = torch::roll(totrainl, 1);
 
-												bool aboveres = wasab;
+								for (int y = 0; y < 1; ++y) {
 
-												if (betsitesrmade == 400) {
-													//if (trainedb) {
-													//	std::exit(0);
-													//}
-													trainedb = false;
-													btrain = totrainlm.defined();
-													dobetr = !btrain;
-													needregen = vbal2 < 0;
-													tolrnll2 = abvsgrids.clone().detach();//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-													rfmsk = (((rfgrid > 0.).toType(c10::ScalarType::Float) * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
-													wmsklst = wmsk.clone().detach();
-													if (vbal2 < lstvbal2,1) {
-														//trainedb = betsitesrmade400g > 1;
-														fwdhlbl2.copy_(fwdhlblout.contiguous());
-													}
-													if (1) {
-														if (0)
-															tolrnl52m = torch::vstack({ tolrnl52m, tolrnll2 }).cuda();
-														else {
+								}
+								rfgrid[0].flatten()[indn] = float(predright);
+								wmsk[0].flatten()[indn] = float(vbal2);
 
-															tolrnl52m = tolrnll2.clone().detach();
+								totrainl = torch::roll(totrainl, 1);
 
-														}
-													}
-													else {
-														tolrnl52m = torch::roll(tolrnl52m, -1, 0);
-														tolrnl52m[-1] = tolrnll2[0];
-													}
-													std::swap(lstvbal2, vbal2);
-													//vbal2 = 0;
-													betsitesrmade400g += 1;
-												}
+								bool aboveres = wasab;
 
+								if (betsitesrmade == 400) {
+									//if (trainedb) {
+									//	std::exit(0);
+									//}
+									trainedb = false;
+									btrain = totrainlm.defined();
+									dobetr = !btrain;
+									needregen = vbal2 < 0;
+									tolrnll2 = abvsgrids.clone().detach();//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
+									rfmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid() * (wmsklst - wmsk).sigmoid();//(rfgrid + 1.) / 2.;//((rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
+									posmsk = torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
+									wmsklst = wmsk.clone().detach();
+									if (vbal2 < lstvbal2, 1) {
+										//trainedb = betsitesrmade400g > 1;
+										fwdhlbl2.copy_(fwdhlblout.contiguous());
+									}
+									if (1) {
+										if (0)
+											tolrnl52m = torch::vstack({ tolrnl52m, tolrnll2 }).cuda();
+										else {
+
+											tolrnl52m = tolrnll2.clone().detach();
 
 										}
-										if (btrain) {
+									}
+									else {
+										tolrnl52m = torch::roll(tolrnl52m, -1, 0);
+										tolrnl52m[-1] = tolrnll2[0];
+									}
+									std::swap(lstvbal2, vbal2);
+									//vbal2 = 0;
+									betsitesrmade400g += 1;
+								}
 
-											auto& trgtcrl = stalled;
-											test2->train();
 
-											int localiters = 0;
+							}
+							if (btrain) {
 
-											auto cb = [&](torch::Tensor fwdhlblin, torch::Tensor* fwdhlblout, Net2 mdl) {
+								auto& trgtcrl = stalled;
+								test2->train();
 
-												test2->zero_grad();
+								int localiters = 0;
 
-												auto indn = 400;
-											beg:
-												auto [resall, reswillwin] = mdl->forward(totrainlm, abvsgridslst, rfgridlst, fwdhlblin, fwdhlblout, currmdl);
-												reswillwinotr = reswillwin.squeeze(0);
+								auto cb = [&](torch::Tensor fwdhlblin, torch::Tensor* fwdhlblout, Net2 mdl) {
 
-												if (!torch::all(reswillwinotr.isfinite()).item().toBool()) {
+									test2->zero_grad();
 
-													std::exit(0);
+									auto indn = 400;
+								beg:
+									auto [resall, reswillwin] = mdl->forward(totrainlm, abvsgridslst, rfgridlst, fwdhlblin, fwdhlblout, currmdl);
+									reswillwinotr = reswillwin.squeeze(0);
 
-													test2->train();
-													goto beg;
-												}
+									if (!torch::all(reswillwinotr.isfinite()).item().toBool()) {
 
-												loss2 =
-													hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), rfmsk);//.mean(1).flatten());
+										std::exit(0);
 
+										test2->train();
+										goto beg;
+									}
 
-												float loss = loss2.item().toFloat();
-												if (losslstg != FLT_MAX) {
-													lssdif = (loss - losslstg);
-													if (lssdif == 0.) {
-														fsw = false;
-													}
-												}
-												else {
-													lssdif = FLT_MIN;
-													startinlss = loss;
-												}
+									loss2 =
+										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), rfmsk, posmsk);//.mean(1).flatten());
 
-#if 1
-												if (std::min(loss, lss2min) != lss2min) {
-													minned = true;
-													wasminned = true;
 
-													nonminned = 0;
-
-
-												}
-												else {
-
-													minned = false;
-
-												}
-#endif
-												lss2min = std::min(loss, lss2min);
-												losslstg = loss;
-
-												
-												auto& runlrr = (!optsw, true ? runlr : runlr2);
-
-												if (1) {
-													if ((std::abs(lssdif) < runlr) != (lssdif < 0.)) {
-
-														runlr += runlr / runlradv;
-														runlr2 += runlr2 / runlradv;
-														runlr3 += runlr3 / runlradv;
-
-														zrgr = false;
-
-													}
-													else {
-														runlr -= runlr / runlradv;
-														runlr2 -= runlr2 / runlradv;
-														runlr3 -= runlr3 / runlradv;
-
-														zrgr = true;
-
-													}
-													optim[1]->param_groups()[0].options().set_lr(runlr);
-													dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100.);
-													optim[1]->param_groups()[1].options().set_lr(runlr2);
-													dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100.);
-													optim[1]->param_groups()[2].options().set_lr(runlr3);
-													dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100.);
-
-												}
-
-												loss2.backward();
-
-												localiters += 1;
-												itesrtraing += 1;
-												return loss2;
-
-												};
-
-											typedef float mift;
-											LBFGSB_CUDA_OPTION<mift> lbfgsb_options;
-											lbfgsbcuda::lbfgsbdefaultoption<mift>(lbfgsb_options);
-											lbfgsb_options.mode = LCM_CUDA;
-											//lbfgsb_options.hessian_approximate_dimension = 4;
-#if 1
-											lbfgsb_options.eps_f = FLT_MIN;//1.0;
-											lbfgsb_options.eps_g = FLT_MIN;//options.tolerance_grad();
-											lbfgsb_options.eps_x = FLT_MIN;//options.tolerance_change();
-											//lbfgsb_options.machine_epsilon = 0;
-#endif
-											lbfgsb_options.max_iteration = 100;//options.max_iter();
-											lbfgsb_options.step_scaling = runlr;
-
-
-
-											LBFGSB_CUDA_STATE<mift> statecu{};
-											LBFGSB_CUDA_SUMMARY<mift> summarycu{};
-											statecu.m_cublas_handle = cublas_handle;
-
-											auto clos = std::bind(cb, fwdhlbl2, &fwdhlblout);
-
-											statecu.m_funcgrad_callback = [&](
-												mift* x, mift& f, mift* g,
-												const cudaStream_t& stream,
-												const LBFGSB_CUDA_SUMMARY<mift>& summary) {
-													std::unique_lock lk(trainm);
-
-													auto xt = torch::from_blob(x, { test2->nels }, device);
-													auto gt = torch::from_blob(g, { test2->nels }, device);
-
-
-													float loss;
-													torch::Tensor flat_grad;
-													std::stringstream ss;
-													lststalled = stalled;
-													stalled = !torch::any(xt != 0.).item().toBool();
-													if (stalled) {
-
-													}
-													else {
-
-													}
-
-													auto t = runlr2;
-													lbfgsb_options.step_scaling = t;
-
-													if (0)
-														test2->add_grad(t, xt.to(device));
-													else {
-														test2->set_grad(1., xt.to(device).toType(c10::ScalarType::Half));
-														optim[1]->step();
-													}
-
-													if (0) {
-
-													
-														runlr = 0.01;// 1e-6;
-														runlr2 = 1.;
-													}
-													if (lssdif == 0., stalled) {
-
-														losslstgr = loss2.item().toFloat();
-
-
-
-													}
-													else {
-
-													}
-
-													if (summarycu.num_iteration > 0 && stalled) {
-
-													}
-
-													{
-
-														torch::AutoGradMode enable_grad(true);
-														loss = cb(fwdhlbl2, &fwdhlblout, test2).item<float>();
-
-													}
-
-													flat_grad = test2->gather_flat_grad();
-													
-													
-														gt.copy_(flat_grad.to(device).toType(sctpt));
-
-
-						
-
-													if (1) {
-														ss << loss << std::endl;
-
-														ss << "lr " << optim[1]->param_groups()[0].options().get_lr() << std::endl;
-														ss << "lr1 " << optim[1]->param_groups()[1].options().get_lr() << std::endl;
-														ss << "lr2 " << optim[1]->param_groups()[2].options().get_lr() << std::endl;
-														ss << "lssdif " << lssdif << std::endl;
-
-														orig_buf->sputn(ss.str().c_str(), ss.str().size());
-													}
-#if 0
-													else {
-														ss << "n_iter " << n_iter << std::endl;
-														// ss << xt << std::endl;
-														 //ss << !t.isnan().any().item<bool>();
-														 //ss << !t.isfinite().any().item<bool>();
-													   // d = grad.neg();
-														orig_buf->sputn(ss.str().c_str(), ss.str().size());
-													}
-#endif
-
-													f = loss;
-
-													return (+(lssdif == 0.));
-												};
-
-											test2->zero_grad();
-
-											lk.unlock();
-											optsw = true;
-											if (1) {
-
-												lbfgsbcuda::lbfgsbminimize(test2->nels, statecu, lbfgsb_options, x.data<mift>(), nbd.data<int>(),
-													xl.data<mift>(), xu.data<mift>(), summarycu);
-											}
-											
-											else {
-
-												cb(fwdhlbl2, &fwdhlblout, test2).item<float>();
-												
-												optim[1]->step();
-
-											}
-
-
-											lk.lock();
-											if ((losslstgor - loss2.item().toFloat()) != 0.) {
-
-											}
-
-											losslstgor = loss2.item().toFloat();
-
-											static bool lsttrgtc = false;
-											bool trgtc = (losslstgorig - loss2.item().toFloat() == 0.);
-
-											bool optc = false;
-											static int minsz = 1;
-											static bool minszd = false;
-											bool wasminnedl = wasminned;
-
-											if ((std::abs(losslstgorig - loss2.item().toFloat()) < 1e-7)) {
-
-												if (wasminned) {
-
-
-												}
-												
-												wasminned = false;
-
-												waschanged += 1;
-
-
-											}
-											else {
-
-												waschanged = 0;
-
-											}
-
-											minned = 0;
-
-											lststc = trgtc;
-
-											losslstgorig = loss2.item().toFloat();
-
-											lssdifg = loss2.item().toFloat() - startinlss;
-
-											/*if ((std::abs(lssdifg) < runlrb) != (lssdifg < 0.)) {
-
-												runlrb += runlrb / 10.;
-												runlrb2 += runlrb2 / 10.;
-												runlrb3 += runlrb3 / 10.;
-
-												//zrgr = false;
-
-											}
-											else {
-												runlrb -= runlrb / 10.;
-												runlrb2 -= runlrb2 / 10.;
-												runlrb3 -= runlrb3 / 10.;
-
-												//zrgr = true;
-
-											}*/
-
-											//if (lssdifg == 0.) {
-												//torch::nn::init::xavier_uniform_(fwdhlbl2);
-												//rotarypos += 1;
-											//	continue;
-											//}
-											coefminbet = std::max(0.f, loss2.item().toFloat() - lstlsslst);
-											lstlsslstdif = loss2.item().toFloat() - lstlsslst;
-											lstlsslst = loss2.item().toFloat();
-
-											if (1) {
-
-												lsttrgtc = false;
-												if (1) {
-
-													sttteedorig = sttteed;
-													itesrtrain = 0;
-													itesrtraing = 0;
-													btrain = false;
-													ierstr += 1;
-													dobetr = 1;
-													currmdl = 0;
-												}
-												else {
-													itesrtrain = 0;
-													itesrtraing = 0;
-													currmdl += 1;
-													dobetr = 0;
-												}
-
-
-											}
-											else
-												dobetr = 0;
-											lsttrgtc = trgtc;
+									float loss = loss2.item().toFloat();
+									if (losslstg != FLT_MAX) {
+										lssdif = (loss - losslstg);
+										if (lssdif == 0.) {
+											fsw = false;
 										}
-										if (dobetr) {
+									}
+									else {
+										lssdif = FLT_MIN;
+										startinlss = loss;
+									}
 
-											if (betsitesrmade == 400) {
-												runlr = runlrb;//0.05;//0.00000166666 * loss2.item().toFloat();
-												runlr2 = runlrb2;
-												runlr3 = runlrb3;//0.00000166666 * loss2.item().toFloat();
-												runlradv = 100.;
-												rfgridlst = abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
-
-												totrainllst = test2->mem.detach().clone();
-												
-												auto totrainllstlst = totrainllst.clone().detach();
-
-												abvsgridslst = abvsgrids.clone().detach();
-												//if (lstlsslstdif < 0.)
-												abvsgrids = abvsgrids.flatten().toType(c10::ScalarType::Bool).bitwise_and(rfgridlst.flatten().flip(0).clone().detach().toType(c10::ScalarType::Bool)).bitwise_not().toType(c10::ScalarType::Float).flatten().flip(0).reshape_as(abvsgrids);
-												rfgridlst = reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
 #if 1
-												test2->eval();
-												
-												auto [resallpr, reswillwinpr] = test2->forward(totrainllst, abvsgridslst, rfgridlst, fwdhlbl2, nullptr, 0);
-										
-												reswillwino1lst = reswillwino1.defined() ? reswillwino1.clone().detach() : reswillwino1lst;
-												reswillwino1 = resallpr.squeeze(0).clone().detach();
-												reswillwino = reswillwino1.sigmoid().flatten(1);
+									if (std::min(loss, lss2min) != lss2min) {
+										minned = true;
+										wasminned = true;
+
+										nonminned = 0;
 
 
-												if (!torch::all(reswillwino.isfinite()).item().toBool()) {
-													std::exit(0);
-												}
+									}
+									else {
 
-												test2->zero_grad();
+										minned = false;
+
+									}
 #endif
-												if (todrawres.defined() && todrawres.size(0) > 0) for (auto in = 0; in < 2; ++in) {
-													auto res1 = todrawres[0].swapaxes(-1, -2)[in].flatten();
-#if 0
-													if (itesrg == 0) {
-														auto meani = (torch::arange(20, res1.options()) * res1).sum() / res1.sum();
-														actualdir4 = meani.item().toFloat() > 10.;
-														dirmean = meani.item().toFloat();
-														//dobetr = 1;
-													}
-#endif
-													//for (int in =0; in < 1;++in)
-													if (!inited, true) {
-														//res1 *= 4;
-
-														int i = ind1;
-														{
-															if (i % 3 == 0) {
-																//triangleVertices[i].vals[6] = 1.0;
-																//triangleVertices[i].vals[5] = 1.0;
-																//triangleIndices[i] = i;
-															}
-															else if (i % 2 == 0) {
-																//triangleVertices[i].vals[6] = 1.0;
-																//triangleIndices[i] = i;
-															}
-															else {
-																//triangleIndices[i] = 49 - i;
-																//triangleVertices[i].vals[6] = 1.0;
-																//triangleVertices[i].vals[4] = 1.0;
-															}
-															triangleVertices[i].vals[0] = (res1[0].item().toFloat() * 2. - 1.);
-															triangleVertices[i].vals[1] = (res1[1].item().toFloat() * 2. - 1.);
-															triangleVertices[i].vals[2] = res1[2].item().toFloat();
-															triangleVertices[i].vals[3] = 1.0;//res[3].item().toFloat();// + 0.15;
-															triangleVertices[i].vals[4] = torch::tanh(res1[3]).item().toFloat();
-															triangleVertices[i].vals[5] = torch::tanh(res1[4]).item().toFloat();
-															triangleVertices[i].vals[6] = torch::tanh(res1[5]).item().toFloat();
-															triangleVertices[i].vals[7] = torch::tanh(res1[7]).item().toFloat() * 360.;//genranf();
-															triangleIndices[i] = i % 2 == 0 ? i : 49 - i;
-														}
-														ind1 += 1;
-														inited = ind1 >= 50;
-
-														if (inited) {
-
-															ind1 = 0;
-#if 0
-															maxx = FLT_MIN;
-															minx = FLT_MAX;
-															maxy = FLT_MIN;
-															miny = FLT_MAX;
-															for (int y = 0; y < 50; ++y) {
-																maxx = std::max(triangleVertices[y].vals[0], maxx);
-																minx = std::min(triangleVertices[y].vals[0], minx);
-
-																maxy = std::max(triangleVertices[y].vals[1], maxy);
-																miny = std::min(triangleVertices[y].vals[1], miny);
-															}
-#endif
-														}
-
-													}
-												}
-#if 0
-												auto prevlss = torch::mse_loss(abvsgrid, totrainllst).item().toFloat();
-												std::stringstream ss;
-												ss << "prevlss " << prevlss << std::endl;
-												//
-												orig_buf->sputn(ss.str().c_str(), ss.str().size());
-												totrainllst = abvsgrid.clone().detach();
-#endif
+									lss2min = std::min(loss, lss2min);
+									losslstg = loss;
 
 
-												auto totrainll = totrainllst;//totrainl.select(-1, 0).select(-1, 0).unsqueeze(-1).unsqueeze(-1);
-#if 1
-												//if (!(vbal2 > lstvbal2) || !totrainlm.defined(), 1) {
+									auto& runlrr = (!optsw, true ? runlr : runlr2);
 
-												if (totrainlm.size(0) < 2, 1) {
-													if (betsitesrmade > 0, totrainlm.defined(), 0)
-														totrainlm = torch::vstack({ totrainlm, totrainllst }).cuda();
-													else
-														totrainlm = totrainllst.clone().detach();
-												}
-												else {
-													totrainlm = torch::roll(totrainlm, -1, 0);
-													totrainlm[-1] = totrainllst[0];
-												}
+									if (1) {
+										if ((std::abs(lssdif) < runlr) != (lssdif < 0.)) {
 
+											runlr += runlr / runlradv;
+											runlr2 += runlr2 / runlradv;
+											runlr3 += runlr3 / runlradv;
 
-												//}
-#endif
+											zrgr = false;
 
-												betsitesrmade = 0;
-
-												orand = !orand;
-												itesrwin = 0;
-												acccoef = 0.;
-
-												if (loss2.item().toFloat() < 0.1, 0) {
-													fwdhlbl2.copy_(fwdhlblout.contiguous().detach());
-													tolrnl52m.~decltype(tolrnl52m)();
-													totrainlm.~decltype(totrainlm)();
-													new(&tolrnl52m)decltype(tolrnl52m)();
-													new(&totrainlm)decltype(totrainlm)();
-												}
-												//fwdhlbl.copy_(fwdhlblout.contiguous().detach());
-											}
-
-
-
-										}
-
-										std::stringstream ss;
-										ss << "waschanged " << waschanged << std::endl;
-										ss << "loss " << loss2 << std::endl;
-										ss << "itesrtrain " << itesrtrain << std::endl;
-										if (dobetr) {
-											ss << "totrainl " << totrainlm << std::endl;
-											//ss << "rfgrid " << rfgrid << std::endl;
-											//ss << "rfgrdif " << (totrainllst - rfgrid).abs() << std::endl;
-											ss << "tolrnll2 " << tolrnl52m << std::endl;
-											ss << "abvsgrids " << abvsgrids << std::endl;
-											ss << "rfmsk " << rfmsk << std::endl;
-											//ss << "abvsgridsvals " << abvsgridsvals << std::endl;
-											if (reswillwino.defined()) {
-												ss << "reswillwino " << reswillwino << std::endl;
-												ss << "reswillwinom " << reswillwino.mean() << std::endl;
-											}
-											ss << "vbal " << vbal << std::endl;
-											ss << "rrvbal " << rrbalv << std::endl;
-											//if (itesrwin)
-											ss << "rrbal " << (rrbal / 100000000.) << std::endl;
-											ss << "rrvbalmin " << rrbalminv << std::endl;
-											ss << "rrvbalmax " << rrbalmaxv << std::endl;
-											ss << "betsitesrmade400g " << betsitesrmade400g << std::endl;
-											ss << "lssdifg " << lssdifg << std::endl;	
-											ss << "lstlsslstdif " << lstlsslstdif << std::endl;
 										}
 										else {
-											itesrtrain += 1;
-											//	ss << "lssdif " << lssdif << std::endl;
+											runlr -= runlr / runlradv;
+											runlr2 -= runlr2 / runlradv;
+											runlr3 -= runlr3 / runlradv;
+
+											zrgr = true;
+
+										}
+										optim[1]->param_groups()[0].options().set_lr(runlr);
+										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100.);
+										optim[1]->param_groups()[1].options().set_lr(runlr2);
+										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100.);
+										optim[1]->param_groups()[2].options().set_lr(runlr3);
+										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100.);
+
+									}
+
+									loss2.backward();
+
+									localiters += 1;
+									itesrtraing += 1;
+									return loss2;
+
+									};
+
+								typedef float mift;
+								LBFGSB_CUDA_OPTION<mift> lbfgsb_options;
+								lbfgsbcuda::lbfgsbdefaultoption<mift>(lbfgsb_options);
+								lbfgsb_options.mode = LCM_CUDA;
+								//lbfgsb_options.hessian_approximate_dimension = 4;
+#if 1
+								lbfgsb_options.eps_f = FLT_MIN;//1.0;
+								lbfgsb_options.eps_g = FLT_MIN;//options.tolerance_grad();
+								lbfgsb_options.eps_x = FLT_MIN;//options.tolerance_change();
+								//lbfgsb_options.machine_epsilon = 0;
+#endif
+								lbfgsb_options.max_iteration = 100;//options.max_iter();
+								lbfgsb_options.step_scaling = runlr;
+
+
+
+								LBFGSB_CUDA_STATE<mift> statecu{};
+								LBFGSB_CUDA_SUMMARY<mift> summarycu{};
+								statecu.m_cublas_handle = cublas_handle;
+
+								auto clos = std::bind(cb, fwdhlbl2, &fwdhlblout);
+
+								statecu.m_funcgrad_callback = [&](
+									mift* x, mift& f, mift* g,
+									const cudaStream_t& stream,
+									const LBFGSB_CUDA_SUMMARY<mift>& summary) {
+										std::unique_lock lk(trainm);
+
+										auto xt = torch::from_blob(x, { test2->nels }, device);
+										auto gt = torch::from_blob(g, { test2->nels }, device);
+
+
+										float loss;
+										torch::Tensor flat_grad;
+										std::stringstream ss;
+										lststalled = stalled;
+										stalled = !torch::any(xt != 0.).item().toBool();
+										if (stalled) {
+
+										}
+										else {
 
 										}
 
+										auto t = runlr2;
+										lbfgsb_options.step_scaling = t;
 
-										orig_buf->sputn(ss.str().c_str(), ss.str().size());
-										//torch::save(test2, "test2.pt");
+										if (0)
+											test2->add_grad(t, xt.to(device));
+										else {
+											test2->set_grad(1., xt.to(device).toType(c10::ScalarType::Half));
+											optim[1]->step();
+										}
 
-									} while (1);
+										if (0) {
+
+
+											runlr = 0.01;// 1e-6;
+											runlr2 = 1.;
+										}
+										if (lssdif == 0., stalled) {
+
+											losslstgr = loss2.item().toFloat();
+
+
+
+										}
+										else {
+
+										}
+
+										if (summarycu.num_iteration > 0 && stalled) {
+
+										}
+
+										{
+
+											torch::AutoGradMode enable_grad(true);
+											loss = cb(fwdhlbl2, &fwdhlblout, test2).item<float>();
+
+										}
+
+										flat_grad = test2->gather_flat_grad();
+
+
+										gt.copy_(flat_grad.to(device).toType(sctpt));
+
+
+
+
+										if (1) {
+											ss << loss << std::endl;
+
+											ss << "lr " << optim[1]->param_groups()[0].options().get_lr() << std::endl;
+											ss << "lr1 " << optim[1]->param_groups()[1].options().get_lr() << std::endl;
+											ss << "lr2 " << optim[1]->param_groups()[2].options().get_lr() << std::endl;
+											ss << "lssdif " << lssdif << std::endl;
+
+											orig_buf->sputn(ss.str().c_str(), ss.str().size());
+										}
+#if 0
+										else {
+											ss << "n_iter " << n_iter << std::endl;
+											// ss << xt << std::endl;
+											 //ss << !t.isnan().any().item<bool>();
+											 //ss << !t.isfinite().any().item<bool>();
+										   // d = grad.neg();
+											orig_buf->sputn(ss.str().c_str(), ss.str().size());
+										}
+#endif
+
+										f = loss;
+
+										return (+(lssdif == 0.));
+									};
+
+								test2->zero_grad();
+
+								lk.unlock();
+								optsw = true;
+								if (1) {
+
+									lbfgsbcuda::lbfgsbminimize(test2->nels, statecu, lbfgsb_options, x.data<mift>(), nbd.data<int>(),
+										xl.data<mift>(), xu.data<mift>(), summarycu);
 								}
-								//if (trainedb)
-								//	fwdhlbl.copy_(fwdhlblout.contiguous().clone());
-								lssdifovg = std::abs(losslstgorig - loss2.item().toFloat());
-								{
+
+								else {
+
+									cb(fwdhlbl2, &fwdhlblout, test2).item<float>();
+
+									optim[1]->step();
+
+								}
+
+
+								lk.lock();
+								if ((losslstgor - loss2.item().toFloat()) != 0.) {
+
+								}
+
+								losslstgor = loss2.item().toFloat();
+
+								static bool lsttrgtc = false;
+								bool trgtc = (losslstgorig - loss2.item().toFloat() == 0.);
+
+								bool optc = false;
+								static int minsz = 1;
+								static bool minszd = false;
+								bool wasminnedl = wasminned;
+
+								if ((std::abs(losslstgorig - loss2.item().toFloat()) < 1e-7)) {
+
+									if (wasminned) {
+
+
+									}
+
+									wasminned = false;
+
+									waschanged += 1;
+
+
+								}
+								else {
+
+									waschanged = 0;
+
+								}
+
+								minned = 0;
+
+								lststc = trgtc;
+
+								losslstgorig = loss2.item().toFloat();
+
+								lssdifg = loss2.item().toFloat() - startinlss;
+
+								/*if ((std::abs(lssdifg) < runlrb) != (lssdifg < 0.)) {
+
+									runlrb += runlrb / 10.;
+									runlrb2 += runlrb2 / 10.;
+									runlrb3 += runlrb3 / 10.;
+
+									//zrgr = false;
+
+								}
+								else {
+									runlrb -= runlrb / 10.;
+									runlrb2 -= runlrb2 / 10.;
+									runlrb3 -= runlrb3 / 10.;
+
+									//zrgr = true;
+
+								}*/
+
+								//if (lssdifg == 0.) {
+									//torch::nn::init::xavier_uniform_(fwdhlbl2);
+									//rotarypos += 1;
+								//	continue;
+								//}
+								coefminbet = std::max(0.f, loss2.item().toFloat() - lstlsslst);
+								lstlsslstdif = loss2.item().toFloat() - lstlsslst;
+								lstlsslst = loss2.item().toFloat();
+
+								if (1) {
+
+									lsttrgtc = false;
+									if (1) {
+
+										sttteedorig = sttteed;
+										itesrtrain = 0;
+										itesrtraing = 0;
+										btrain = false;
+										ierstr += 1;
+										dobetr = 1;
+										currmdl = 0;
+									}
+									else {
+										itesrtrain = 0;
+										itesrtraing = 0;
+										currmdl += 1;
+										dobetr = 0;
+									}
+
+
+								}
+								else
+									dobetr = 0;
+								lsttrgtc = trgtc;
+							}
+							if (dobetr) {
+
+								if (betsitesrmade == 400) {
+									runlr = runlrb;//0.05;//0.00000166666 * loss2.item().toFloat();
+									runlr2 = runlrb2;
+									runlr3 = runlrb3;//0.00000166666 * loss2.item().toFloat();
+									runlradv = 100.;
+									rfgridlst = abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
+
+									totrainllst = test2->mem.detach().clone();
+
+									auto totrainllstlst = totrainllst.clone().detach();
+
+									abvsgridslst = abvsgrids.clone().detach();
+									//if (lstlsslstdif < 0.)
+									abvsgrids = abvsgrids.flatten().toType(c10::ScalarType::Bool).bitwise_and(rfgridlst.flatten().flip(0).clone().detach().toType(c10::ScalarType::Bool)).bitwise_not().toType(c10::ScalarType::Float).flatten().flip(0).reshape_as(abvsgrids);
+									rfgridlst = reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
+#if 1
+									test2->eval();
+
+									auto [resallpr, reswillwinpr] = test2->forward(totrainllst, abvsgridslst, rfgridlst, fwdhlbl2, nullptr, 0);
+
+									reswillwino1lst = reswillwino1.defined() ? reswillwino1.clone().detach() : reswillwino1lst;
+									reswillwino1 = resallpr.squeeze(0).clone().detach();
+									reswillwino = reswillwino1.sigmoid().flatten(1);
+
+
+									if (!torch::all(reswillwino.isfinite()).item().toBool()) {
+										std::exit(0);
+									}
+
+									test2->zero_grad();
+#endif
+									if (todrawres.defined() && todrawres.size(0) > 0) for (auto in = 0; in < 2; ++in) {
+										auto res1 = todrawres[0].swapaxes(-1, -2)[in].flatten();
+#if 0
+										if (itesrg == 0) {
+											auto meani = (torch::arange(20, res1.options()) * res1).sum() / res1.sum();
+											actualdir4 = meani.item().toFloat() > 10.;
+											dirmean = meani.item().toFloat();
+											//dobetr = 1;
+										}
+#endif
+										//for (int in =0; in < 1;++in)
+										if (!inited, true) {
+											//res1 *= 4;
+
+											int i = ind1;
+											{
+												if (i % 3 == 0) {
+													//triangleVertices[i].vals[6] = 1.0;
+													//triangleVertices[i].vals[5] = 1.0;
+													//triangleIndices[i] = i;
+												}
+												else if (i % 2 == 0) {
+													//triangleVertices[i].vals[6] = 1.0;
+													//triangleIndices[i] = i;
+												}
+												else {
+													//triangleIndices[i] = 49 - i;
+													//triangleVertices[i].vals[6] = 1.0;
+													//triangleVertices[i].vals[4] = 1.0;
+												}
+												triangleVertices[i].vals[0] = (res1[0].item().toFloat() * 2. - 1.);
+												triangleVertices[i].vals[1] = (res1[1].item().toFloat() * 2. - 1.);
+												triangleVertices[i].vals[2] = res1[2].item().toFloat();
+												triangleVertices[i].vals[3] = 1.0;//res[3].item().toFloat();// + 0.15;
+												triangleVertices[i].vals[4] = torch::tanh(res1[3]).item().toFloat();
+												triangleVertices[i].vals[5] = torch::tanh(res1[4]).item().toFloat();
+												triangleVertices[i].vals[6] = torch::tanh(res1[5]).item().toFloat();
+												triangleVertices[i].vals[7] = torch::tanh(res1[7]).item().toFloat() * 360.;//genranf();
+												triangleIndices[i] = i % 2 == 0 ? i : 49 - i;
+											}
+											ind1 += 1;
+											inited = ind1 >= 50;
+
+											if (inited) {
+
+												ind1 = 0;
+#if 0
+												maxx = FLT_MIN;
+												minx = FLT_MAX;
+												maxy = FLT_MIN;
+												miny = FLT_MAX;
+												for (int y = 0; y < 50; ++y) {
+													maxx = std::max(triangleVertices[y].vals[0], maxx);
+													minx = std::min(triangleVertices[y].vals[0], minx);
+
+													maxy = std::max(triangleVertices[y].vals[1], maxy);
+													miny = std::min(triangleVertices[y].vals[1], miny);
+												}
+#endif
+											}
+
+										}
+									}
+#if 0
+									auto prevlss = torch::mse_loss(abvsgrid, totrainllst).item().toFloat();
 									std::stringstream ss;
-									ss << "lssdifovg " << lssdifovg << std::endl;
-
+									ss << "prevlss " << prevlss << std::endl;
+									//
 									orig_buf->sputn(ss.str().c_str(), ss.str().size());
-								}
-								bool emti = (lssdifovg < 1e-5 && itesrtrain > 1) && !(loss2.item().toFloat() < 0.5);
-								itesrempty += emti;
-								if (itesrempty > 0)
-								{
-									std::stringstream ss;
-									ss << "itesrempty " << itesrempty << std::endl;
+									totrainllst = abvsgrid.clone().detach();
+#endif
 
-									orig_buf->sputn(ss.str().c_str(), ss.str().size());
-								}
-								if (!emti) {
-									itesrempty = 0;
-									//fwdhlbl.zero_();
+
+									auto totrainll = totrainllst;//totrainl.select(-1, 0).select(-1, 0).unsqueeze(-1).unsqueeze(-1);
+#if 1
+									//if (!(vbal2 > lstvbal2) || !totrainlm.defined(), 1) {
+
+									if (totrainlm.size(0) < 2, 1) {
+										if (betsitesrmade > 0, totrainlm.defined(), 0)
+											totrainlm = torch::vstack({ totrainlm, totrainllst }).cuda();
+										else
+											totrainlm = totrainllst.clone().detach();
+									}
+									else {
+										totrainlm = torch::roll(totrainlm, -1, 0);
+										totrainlm[-1] = totrainllst[0];
+									}
+
+
+									//}
+#endif
+
+									betsitesrmade = 0;
+
+									orand = !orand;
+									itesrwin = 0;
+									acccoef = 0.;
+
+									if (loss2.item().toFloat() < 0.1, 0) {
+										fwdhlbl2.copy_(fwdhlblout.contiguous().detach());
+										tolrnl52m.~decltype(tolrnl52m)();
+										totrainlm.~decltype(totrainlm)();
+										new(&tolrnl52m)decltype(tolrnl52m)();
+										new(&totrainlm)decltype(totrainlm)();
+									}
+									//fwdhlbl.copy_(fwdhlblout.contiguous().detach());
 								}
 
-								itesr = -1;
+
 
 							}
 
-							totrainl = torch::roll(totrainl, 1);
-
-							betsitesrmade += 1;
-
-
-							dobetr = 1;
+							std::stringstream ss;
+							ss << "waschanged " << waschanged << std::endl;
+							ss << "loss " << loss2 << std::endl;
+							ss << "itesrtrain " << itesrtrain << std::endl;
+							if (dobetr) {
+								ss << "totrainl " << totrainlm << std::endl;
+								//ss << "rfgrid " << rfgrid << std::endl;
+								//ss << "rfgrdif " << (totrainllst - rfgrid).abs() << std::endl;
+								ss << "tolrnll2 " << tolrnl52m << std::endl;
+								ss << "abvsgrids " << abvsgrids << std::endl;
+								ss << "rfmsk " << rfmsk << std::endl;
+								ss << "posmsk " << posmsk << std::endl;
+								//ss << "abvsgridsvals " << abvsgridsvals << std::endl;
+								if (reswillwino.defined()) {
+									ss << "reswillwino " << reswillwino << std::endl;
+									ss << "reswillwinom " << reswillwino.mean() << std::endl;
+								}
+								ss << "vbal " << vbal << std::endl;
+								ss << "rrvbal " << rrbalv << std::endl;
+								//if (itesrwin)
+								ss << "rrbal " << (rrbal / 100000000.) << std::endl;
+								ss << "rrvbalmin " << rrbalminv << std::endl;
+								ss << "rrvbalmax " << rrbalmaxv << std::endl;
+								ss << "betsitesrmade400g " << betsitesrmade400g << std::endl;
+								ss << "lssdifg " << lssdifg << std::endl;
+								ss << "lstlsslstdif " << lstlsslstdif << std::endl;
+							}
+							else {
+								itesrtrain += 1;
+								//	ss << "lssdif " << lssdif << std::endl;
 
 							}
 
-						;
+
+							orig_buf->sputn(ss.str().c_str(), ss.str().size());
+							//torch::save(test2, "test2.pt");
+
+						} while (1);
+					}
+					//if (trainedb)
+					//	fwdhlbl.copy_(fwdhlblout.contiguous().clone());
+					lssdifovg = std::abs(losslstgorig - loss2.item().toFloat());
+					{
+						std::stringstream ss;
+						ss << "lssdifovg " << lssdifovg << std::endl;
+
+						orig_buf->sputn(ss.str().c_str(), ss.str().size());
+					}
+					bool emti = (lssdifovg < 1e-5 && itesrtrain > 1) && !(loss2.item().toFloat() < 0.5);
+					itesrempty += emti;
+					if (itesrempty > 0)
+					{
+						std::stringstream ss;
+						ss << "itesrempty " << itesrempty << std::endl;
+
+						orig_buf->sputn(ss.str().c_str(), ss.str().size());
+					}
+					if (!emti) {
+						itesrempty = 0;
+						//fwdhlbl.zero_();
+					}
+
+					itesr = -1;
+
+				}
+
+				totrainl = torch::roll(totrainl, 1);
+
+				betsitesrmade += 1;
+
+
+				dobetr = 1;
+
+				}
+
+			;
 
 
 
@@ -2537,144 +2541,144 @@ int main(int, char**) {
 
 
 
-						static bool started = false;
+			static bool started = false;
 
-						if (!started && trainedb3) {
+			if (!started && trainedb3) {
 
-							std::thread(dobetl2).detach();
-							started = true;
+				std::thread(dobetl2).detach();
+				started = true;
 
-						}
+			}
 
 
 #if 1
-						D3D12_VIEWPORT m_viewport{ 0, 0, 640, 480, 0.0, 1.0 };
-						D3D12_RECT m_scissorRect{ 0, 0, 640, 480 };
+			D3D12_VIEWPORT m_viewport{ 0, 0, 640, 480, 0.0, 1.0 };
+			D3D12_RECT m_scissorRect{ 0, 0, 640, 480 };
 
-						// Command list allocators can only be reset when the associated 
-						 // command lists have finished execution on the GPU; apps should use 
-						 // fences to determine GPU execution progress.
-						m_commandAllocator->Reset();
+			// Command list allocators can only be reset when the associated 
+			 // command lists have finished execution on the GPU; apps should use 
+			 // fences to determine GPU execution progress.
+			m_commandAllocator->Reset();
 
-						// However, when ExecuteCommandList() is called on a particular command 
-						// list, that command list can then be reset at any time and must be before 
-						// re-recording.
-						m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get());
+			// However, when ExecuteCommandList() is called on a particular command 
+			// list, that command list can then be reset at any time and must be before 
+			// re-recording.
+			m_commandList->Reset(m_commandAllocator.Get(), m_pipelineState.Get());
 
-						// Set necessary state.
-						m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
-						m_commandList->RSSetViewports(1, &m_viewport);
-						m_commandList->RSSetScissorRects(1, &m_scissorRect);
+			// Set necessary state.
+			m_commandList->SetGraphicsRootSignature(m_rootSignature.Get());
+			m_commandList->RSSetViewports(1, &m_viewport);
+			m_commandList->RSSetScissorRects(1, &m_scissorRect);
 
-						m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
+			m_frameIndex = m_swapChain->GetCurrentBackBufferIndex();
 
-						// Indicate that the back buffer will be used as a render target.
-						D3D12_RESOURCE_BARRIER barrier = { .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-							.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-							.Transition = {.pResource = m_renderTargets[m_frameIndex].Get(),
-							.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-							.StateBefore = D3D12_RESOURCE_STATE_PRESENT, .StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET,
-						} };
-						//auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-						m_commandList->ResourceBarrier(1, &barrier);
+			// Indicate that the back buffer will be used as a render target.
+			D3D12_RESOURCE_BARRIER barrier = { .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+				.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+				.Transition = {.pResource = m_renderTargets[m_frameIndex].Get(),
+				.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+				.StateBefore = D3D12_RESOURCE_STATE_PRESENT, .StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET,
+			} };
+			//auto barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+			m_commandList->ResourceBarrier(1, &barrier);
 
-						D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = { .ptr = m_rtvHeap->GetCPUDescriptorHandleForHeapStart().ptr + m_frameIndex * m_rtvDescriptorSize };
-						m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+			D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = { .ptr = m_rtvHeap->GetCPUDescriptorHandleForHeapStart().ptr + m_frameIndex * m_rtvDescriptorSize };
+			m_commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
 
-						// Record commands.
+			// Record commands.
 
 
-						m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-						m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-						{
+			m_commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+			m_commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+			{
 
-							// Note: using upload heaps to transfer static data like vert buffers is not 
-							// recommended. Every time the GPU needs it, the upload heap will be marshalled 
-							// over. Please read up on Default Heap usage. An upload heap is used here for 
-							// code simplicity and because there are very few verts to actually transfer.
-							D3D12_HEAP_PROPERTIES heapProps{ .Type = D3D12_HEAP_TYPE_UPLOAD,
-								.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
-								.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
-								.CreationNodeMask = 1,
-								.VisibleNodeMask = 1 };
-							//auto desc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
-							if (!m_vertexBuffer)
-								m_device->CreateCommittedResource(
-									&heapProps,
-									D3D12_HEAP_FLAG_NONE,
-									&desc,
-									D3D12_RESOURCE_STATE_GENERIC_READ,
-									nullptr,
-									IID_PPV_ARGS(&m_vertexBuffer));
-							if (!m_indexBuffer) {
-								m_device->CreateCommittedResource(
-									&heapProps,
-									D3D12_HEAP_FLAG_NONE,
-									&desc,
-									D3D12_RESOURCE_STATE_GENERIC_READ,
-									nullptr,
-									IID_PPV_ARGS(&m_indexBuffer));
-							}
+				// Note: using upload heaps to transfer static data like vert buffers is not 
+				// recommended. Every time the GPU needs it, the upload heap will be marshalled 
+				// over. Please read up on Default Heap usage. An upload heap is used here for 
+				// code simplicity and because there are very few verts to actually transfer.
+				D3D12_HEAP_PROPERTIES heapProps{ .Type = D3D12_HEAP_TYPE_UPLOAD,
+					.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_UNKNOWN,
+					.MemoryPoolPreference = D3D12_MEMORY_POOL_UNKNOWN,
+					.CreationNodeMask = 1,
+					.VisibleNodeMask = 1 };
+				//auto desc = CD3DX12_RESOURCE_DESC::Buffer(vertexBufferSize);
+				if (!m_vertexBuffer)
+					m_device->CreateCommittedResource(
+						&heapProps,
+						D3D12_HEAP_FLAG_NONE,
+						&desc,
+						D3D12_RESOURCE_STATE_GENERIC_READ,
+						nullptr,
+						IID_PPV_ARGS(&m_vertexBuffer));
+				if (!m_indexBuffer) {
+					m_device->CreateCommittedResource(
+						&heapProps,
+						D3D12_HEAP_FLAG_NONE,
+						&desc,
+						D3D12_RESOURCE_STATE_GENERIC_READ,
+						nullptr,
+						IID_PPV_ARGS(&m_indexBuffer));
+				}
 
-							{
-								UINT8* pVertexDataBegin;
-								D3D12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-								m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
-								memcpy(pVertexDataBegin, triangleIndices, indexBufferSize);
-								m_indexBuffer->Unmap(0, nullptr);
-							}
+				{
+					UINT8* pVertexDataBegin;
+					D3D12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+					m_indexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
+					memcpy(pVertexDataBegin, triangleIndices, indexBufferSize);
+					m_indexBuffer->Unmap(0, nullptr);
+				}
 
-							// Copy the triangle data to the vertex buffer.
-							UINT8* pVertexDataBegin;
-							D3D12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
-							m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
-							memcpy(pVertexDataBegin, triangleVertices, vertexBufferSize);
-							m_vertexBuffer->Unmap(0, nullptr);
+				// Copy the triangle data to the vertex buffer.
+				UINT8* pVertexDataBegin;
+				D3D12_RANGE readRange(0, 0);        // We do not intend to read from this resource on the CPU.
+				m_vertexBuffer->Map(0, &readRange, reinterpret_cast<void**>(&pVertexDataBegin));
+				memcpy(pVertexDataBegin, triangleVertices, vertexBufferSize);
+				m_vertexBuffer->Unmap(0, nullptr);
 
-							// Initialize the vertex buffer view.
-							m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
-							m_vertexBufferView.StrideInBytes = 32;
-							m_vertexBufferView.SizeInBytes = vertexBufferSize;
-							m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
-							m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
-							m_indexBufferView.SizeInBytes = indexBufferSize;
-							m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
-							m_commandList->IASetIndexBuffer(&m_indexBufferView);
-							m_commandList->DrawIndexedInstanced(50, 1, 0, 0, 0);
-						}
+				// Initialize the vertex buffer view.
+				m_vertexBufferView.BufferLocation = m_vertexBuffer->GetGPUVirtualAddress();
+				m_vertexBufferView.StrideInBytes = 32;
+				m_vertexBufferView.SizeInBytes = vertexBufferSize;
+				m_indexBufferView.BufferLocation = m_indexBuffer->GetGPUVirtualAddress();
+				m_indexBufferView.Format = DXGI_FORMAT_R16_UINT;
+				m_indexBufferView.SizeInBytes = indexBufferSize;
+				m_commandList->IASetVertexBuffers(0, 1, &m_vertexBufferView);
+				m_commandList->IASetIndexBuffer(&m_indexBufferView);
+				m_commandList->DrawIndexedInstanced(50, 1, 0, 0, 0);
+			}
 
-						barrier = { .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
-							.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
-							.Transition = {.pResource = m_renderTargets[m_frameIndex].Get(),
-							.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-							.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET, .StateAfter = D3D12_RESOURCE_STATE_PRESENT,
-						} };
+			barrier = { .Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION,
+				.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE,
+				.Transition = {.pResource = m_renderTargets[m_frameIndex].Get(),
+				.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+				.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET, .StateAfter = D3D12_RESOURCE_STATE_PRESENT,
+			} };
 
-						// Indicate that the back buffer will now be used to present.
-						//barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-						m_commandList->ResourceBarrier(1, &barrier);
+			// Indicate that the back buffer will now be used to present.
+			//barrier = CD3DX12_RESOURCE_BARRIER::Transition(m_renderTargets[m_frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+			m_commandList->ResourceBarrier(1, &barrier);
 
-						m_commandList->Close();
+			m_commandList->Close();
 
-						ppCommandLists[0] = { m_commandList.Get() };
-						m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+			ppCommandLists[0] = { m_commandList.Get() };
+			m_commandQueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
-						m_swapChain->Present(1, 0);//*/
+			m_swapChain->Present(1, 0);//*/
 #endif
 #if 1
-						MSG msg = { };
-						while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
-						{
-							TranslateMessage(&msg);
-							DispatchMessage(&msg);
-						}
+			MSG msg = { };
+			while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
+			{
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 #endif
-					}
-					catch (const c10::Error& e) {
-						std::cout << e.msg() << std::endl;
-					}
+		}
+		catch (const c10::Error& e) {
+			std::cout << e.msg() << std::endl;
+		}
 
-	return 0;
+		return 0;
 
-}
+	}
 }
