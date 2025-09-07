@@ -73,10 +73,8 @@ static float runlradv = 100.;
 static float runlr2 = 0.00001;
 static float runlr3 = 0.00001;
 static float runlr2b = 1e-4;
-static float runlrb = 1e-6;
-static float runlrb2 = 0.0005;
-static float runlrb3 = 0.0005;
-static float lssdifg;
+#define RUNLRBD 0.166666666
+static float runlrb = RUNLRBD;
 static float resallm;
 static float lssdiv;
 static float lossorigin;
@@ -121,7 +119,7 @@ static float avm;
 static float avm2;
 static int betindex = 0;
 static bool betindexdir = 0;
-static torch::Tensor fwdhlbl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda().requires_grad_(false), fwdhlb2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), resall2o, resallo, reswillwino, reswillwino1, reswillwino1lst, reswillwinotr,
+static torch::Tensor fwdhlbl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda().requires_grad_(false), fwdhlb2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), resall2o, resallo, reswillwino, reswillwino1, reswillwinotr,
 fwdhlblout = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2o = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(),
 fwdhlbl2w = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2l = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbloutst = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
 static torch::Tensor reslst = torch::zeros({ 20,20 }).cuda();
@@ -153,95 +151,21 @@ static float resallmena;
 static bool avmed = false;
 static bool avmed2 = false;
 std::streambuf* orig_buf;
-struct RotaryPositionalEmbeddingsImpl : torch::nn::Cloneable<RotaryPositionalEmbeddingsImpl> {
 
-	int dim;
-	int max_seq_len = 4096;
-	int seq_len;
-	int base = 10000;
-	torch::Tensor theta, seq_idx, idx_theta, cache, rope_cache, xshaped, x_out;
-	void reset() override {
-		rope_init();
-	}
-	RotaryPositionalEmbeddingsImpl(int dima, int max_seq_lena = 4096, int basea = 10000) {
-		base = basea;
-		max_seq_len = max_seq_lena;
-		dim = dima;
-		reset();
-	}
-
-	void rope_init() {
-		theta = torch::tensor({ 1.0 }) / (
-			torch::tensor({ base }).toType(torch::ScalarType::Float).pow(torch::arange(0, dim, 2).index({ torch::indexing::Slice(torch::indexing::None, dim / 2) }).toType(torch::ScalarType::Float) / dim)
-			);
-		register_buffer("theta", theta);
-		build_rope_cache(max_seq_len);
-	}
-
-	void build_rope_cache(int max_seq_len = 4096) {
-
-		seq_idx = torch::arange(
-			max_seq_len, torch::dtype(torch::ScalarType::Float)
-		);
-
-
-		idx_theta = torch::einsum("i, j -> ij", { seq_idx, theta }).toType(torch::ScalarType::Float);
-
-
-		cache = torch::stack({ torch::cos(idx_theta), torch::sin(idx_theta) }, -1);
-		register_buffer("cache", cache);
-	}
-	torch::Tensor forward(
-		torch::Tensor x, std::optional<torch::Tensor> input_pos) {
-
-		seq_len = x.size(1);
-
-		rope_cache = (
-			input_pos ? cache[input_pos.value().item()] : cache.index({ torch::indexing::Slice(torch::indexing::None, seq_len) })// if input_pos is None else self.cache[input_pos]
-			);
-
-		auto stakcsizes = x.sizes().vec();
-		stakcsizes.back() /= 2;
-		stakcsizes.append_range(std::vector{ 2 });
-
-		xshaped = x.toType(torch::ScalarType::Float).reshape(stakcsizes);
-
-
-		rope_cache = rope_cache.view({ -1, xshaped.size(1), 1, xshaped.size(3), 2 });
-
-		x_out = torch::stack(
-			{
-				xshaped.index({ "...", 0}) * rope_cache.index({ "...", 0})
-					- xshaped.index({ "...", 1}) * rope_cache.index({ "...", 1}),
-					xshaped.index({ "...", 1}) * rope_cache.index({ "...", 0})
-					+ xshaped.index({ "...", 0}) * rope_cache.index({ "...", 1}),
-			},
-			-1);
-
-
-		x_out = x_out.flatten(3);
-		return x_out;
-	}
-};
-
-TORCH_MODULE(RotaryPositionalEmbeddings);
-static int64_t rotarypos = 0;
 torch::Tensor hybrid_loss(
 	torch::Tensor model_output,      
 	torch::Tensor sl_target,        
 	torch::Tensor validation_matrix 
 ) {
 
-	torch::Tensor sl_loss = /*torch::binary_cross_entropy_with_logits(
+	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, validation_matrix
+		sl_target
 
-	);*/
-
-		torch::abs(torch::tanh(model_output) - sl_target) * validation_matrix;
+	);
 
 	float lambda = 0.5; 
-	return sl_loss.mean();
+	return sl_loss;
 }
 
 
@@ -286,7 +210,7 @@ torch::Tensor totrainl = torch::ones({ 1, 20, 20 }).cuda();
 torch::Tensor totrainllst = torch::zeros({ 1, 1, 20 }).cuda();
 torch::Tensor totraincur = torch::empty({}).cuda();
 torch::Tensor tolrnll2 = torch::zeros({ 1, 20, 20 }).cuda();
-torch::Tensor abvsgrids = torch::ones({ 1, 20, 20 }, dtype(torch::ScalarType::Int)).cuda();
+torch::Tensor abvsgrids = torch::ones({ 1, 20, 20 }).cuda();
 torch::Tensor abvsgridsvals = torch::zeros({ 1, 20, 20 }).to(dtype(torch::ScalarType::Int)).cuda();
 torch::Tensor abvsgridslst = torch::zeros({ 1, 20, 20 }).cuda();
 torch::Tensor totrainll = torch::ones({ 1, 20, 20 }).cuda();
@@ -397,9 +321,6 @@ static DWORD mainthreadid;
 static DWORD learnthreadid;
 static std::atomic_bool condtll3 = false, condtll4, divb = true;
 static int globaliters = 0;
-static float lstlsslst = 0;
-static float lstlsslstdif = 0;
-static float coefminbet = 0;
 std::atomic_bool condtll = false, trainedb = 0, trainedb2 = true, trainedb3 = true, trainedb4 = true, trainedb5 = true, hastrainedb = false, trainedba;
 static std::atomic_bool switchdir = false;
 static bool canchangeswitchdir = false;
@@ -677,7 +598,6 @@ struct NetImpl : torch::nn::Cloneable<NetImpl> {
 		torch::nn::MaxPool1d pool1 = nullptr;
 		torch::nn::MaxPool1d pool2 = nullptr;
 		struct { torch::nn::ConvTranspose1d cnv = nullptr; } tcnvs1d[8 * 5];
-		//RotaryPositionalEmbeddings embds = nullptr;
 	} layers[5];
 	torch::Tensor mem = torch::zeros({ 1, 20, 20 }).cuda();
 
@@ -699,7 +619,7 @@ struct Net2Impl : NetImpl {
 		std::vector<torch::Tensor> cnvpars;
 		for (int i = 0; i < 1; ++i) {
 			layers[i].rnn1 = torch::nn::LSTM(torch::nn::LSTMOptions(20, 20).num_layers(6).bidirectional(true));
-			//layers[i].embds = RotaryPositionalEmbeddings(20);
+
 			if (0) {
 
 			}
@@ -729,7 +649,7 @@ struct Net2Impl : NetImpl {
 
 
 			register_module("rnn1" + std::to_string(i), layers[i].rnn1);
-			//register_module("embds" + std::to_string(i), layers[i].embds);
+
 			register_module("trans4" + std::to_string(i), layers[i].trans4);
 		}
 		to(device);
@@ -768,7 +688,7 @@ struct Net2Impl : NetImpl {
 		int ii = 0;
 		int y = 0;
 
-		//auto in = layers[i].embds->forward(inputl.unsqueeze(1), torch::tensor({ (int64_t)rotarypos })).squeeze(1);
+
 		auto rnnres = layers[i].rnn1(inputl, std::tuple{ hlin[i][0].toType(c10::ScalarType::Half), hlin[i][1].toType(c10::ScalarType::Half) });
 
 		auto rnno = (std::get<0>(rnnres));//std::get<0>(rnnres).chunk(2, -1)[0];//,
@@ -926,7 +846,7 @@ std::atomic_int64_t maxbal = 0;
 std::atomic_int64_t minbal = 0;
 std::atomic_int64_t rmaxbal = 0;
 std::atomic_int64_t rminbal = 0;
-#define DEF_BET_AMNTF 0.0001//0.002//0.00002
+#define DEF_BET_AMNTF 0.00006//0.0001//0.002//0.00002
 std::atomic_int64_t betamnt = 100000000 * DEF_BET_AMNTF;
 float betamntfd = DEF_BET_AMNTF;//0.0;
 std::atomic_uint64_t wins = 0;
@@ -1770,22 +1690,19 @@ int main(int, char**) {
 
 									test2->train();
 
-									float startinlss = 0.;
 									float lssdif = 0.;
 									float lstlssdif = 0.;
 									float lssdiftrgt = 1e-5;
 									bool zrgr = true;
 									bool btrain = false;
 									bool needregen = true;
-									torch::Tensor rfgrid = torch::zeros({ 1, 20, 20 }, dtype(torch::ScalarType::Int)).cuda(), rfgridlst = torch::zeros({ 1, 20, 20 }).cuda(),
-										rfmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsklst = torch::zeros({ 1, 20, 20 }).cuda();
-
+									torch::Tensor rfgrid = torch::zeros({ 1, 20, 20 }).cuda(), rfgridlst = torch::zeros({ 1, 20, 20 }).cuda();
 									bool optsw = false;
 									betsitesrmade = 0;
 
-									runlr = runlrb;//0.05;//0.00000166666 * loss2.item().toFloat();
-									runlr2 = runlrb2;
-									runlr3 = runlrb3;
+									runlr = 1e-6;//0.05;//0.00000166666 * loss2.item().toFloat();
+									runlr2 = 0.0005;
+									runlr3 = 0.0005;
 
 									smpl->train();
 
@@ -1850,7 +1767,7 @@ int main(int, char**) {
 										if (dobetr) {
 											if (betsitesrmade == 0) {
 
-												//torch::save(test2, "test2.pt");
+												torch::save(test2, "test2.pt");
 
 											}
 
@@ -1859,12 +1776,12 @@ int main(int, char**) {
 
 
 												auto indn = (totrainl.flatten().argmax().item().toInt() + 0) % 400;
-												volatile bool wasab = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.).item().toBool() : 0;
+												volatile bool wasab = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn] > 0.5).item().toBool() : 0;
 
 												bool actualpred = wasab;
 
-												float coef = reswillwino.defined() ? ((reswillwino)[0][indn]).abs().item().toFloat() : 0.5;
-												int numtrgt = std::max(200, std::min((int)(wasab ? 9999 * coef : 5000 * (1. - coef)), 9800));
+												float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
+												int numtrgt = 5000;//std::max(200, std::min((int)(10000 * coef), 9800));
 												int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
 
 												float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
@@ -1887,10 +1804,7 @@ int main(int, char**) {
 												volatile int numres, resir, fresir;
 
 												
-												volatile float betamntfl = DEF_BET_AMNTF;//((double)(orbal + rrbal) / 100000000.) * coefminbet;
-												if (betamntfl < DEF_BET_AMNTF) {
-													betamntfl = DEF_BET_AMNTF;
-												}
+												volatile float betamntfl = trainedb ? (1. / 100.) * ((double)(orbal + rrbal) / 100000000.) : DEF_BET_AMNTF;
 
 												if (REAL_BAL) {
 													fresir = dobet(wasab, betamntfl, ch, numres);
@@ -1899,7 +1813,7 @@ int main(int, char**) {
 												else {
 													numres = getRoll(serverSeedl, clientSeedl, noncel);
 													resir = !((numres > 4999) == !!actualpred);
-													fresir = wasab ? !((numres > numtrgt)) : !((numres < numtrgt));
+													fresir = wasab ? !((numres > numtrgt - 1)) : !((numres < numtrgt));
 												}
 
 
@@ -1923,7 +1837,7 @@ int main(int, char**) {
 												rmaxbal = std::max(rrbal, rmaxbal).load();
 												rminbal = std::min(rrbal, rminbal).load();
 
-												vbal2 += avret;//(!fresir ? 1 : -1);
+												vbal2 += (!fresir ? 1 : -1);
 
 												vbal += (!fresir ? 1 : -1);
 
@@ -1944,26 +1858,18 @@ int main(int, char**) {
 												for (int y = 0; y < 1; ++y) {
 
 												}
-												rfgrid[0].flatten()[indn] = numres;
-												wmsk[0].flatten()[indn] = float(vbal2);
+												rfgrid[0].flatten()[indn] = float(predright);
 
 												totrainl = torch::roll(totrainl, 1);
 
 												bool aboveres = wasab;
 
 												if (betsitesrmade == 400) {
-													//if (trainedb) {
-													//	std::exit(0);
-													//}
-													trainedb = false;
 													btrain = totrainlm.defined();
 													dobetr = !btrain;
 													needregen = vbal2 < 0;
-													tolrnll2 = (abvsgrids.bitwise_not().clone().detach().toType(c10::ScalarType::Float) - 5000.) / 10000.;//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-													rfmsk = ((rfgrid * wmsk) / ((rfgrid - 9999).abs() * wmsklst + 1e-6)).sigmoid();
-													wmsklst = wmsk.clone().detach();
-													if (vbal2 < lstvbal2,1) {
-														//trainedb = betsitesrmade400g > 1;
+													tolrnll2 = abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
+													if (vbal2 < lstvbal2) {
 														fwdhlbl2.copy_(fwdhlblout.contiguous());
 													}
 													if (1) {
@@ -1979,8 +1885,8 @@ int main(int, char**) {
 														tolrnl52m = torch::roll(tolrnl52m, -1, 0);
 														tolrnl52m[-1] = tolrnll2[0];
 													}
-													std::swap(lstvbal2, vbal2);
-													//vbal2 = 0;
+													lstvbal2 = +vbal2;
+													vbal2 = 0;
 													betsitesrmade400g += 1;
 												}
 
@@ -2010,20 +1916,14 @@ int main(int, char**) {
 													goto beg;
 												}
 
-												loss2 =
-													hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), rfmsk);//.mean(1).flatten());
+												loss2 = 
+													hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), rfgrid);
 
 
 												float loss = loss2.item().toFloat();
-												if (losslstg != FLT_MAX) {
-													lssdif = (loss - losslstg);
-													if (lssdif == 0.) {
-														fsw = false;
-													}
-												}
-												else {
-													lssdif = FLT_MIN;
-													startinlss = loss;
+												lssdif = (loss - losslstg);
+												if (lssdif == 0.) {
+													fsw = false;
 												}
 
 #if 1
@@ -2257,35 +2157,6 @@ int main(int, char**) {
 
 											losslstgorig = loss2.item().toFloat();
 
-											lssdifg = loss2.item().toFloat() - startinlss;
-
-											/*if ((std::abs(lssdifg) < runlrb) != (lssdifg < 0.)) {
-
-												runlrb += runlrb / 10.;
-												runlrb2 += runlrb2 / 10.;
-												runlrb3 += runlrb3 / 10.;
-
-												//zrgr = false;
-
-											}
-											else {
-												runlrb -= runlrb / 10.;
-												runlrb2 -= runlrb2 / 10.;
-												runlrb3 -= runlrb3 / 10.;
-
-												//zrgr = true;
-
-											}*/
-
-											//if (lssdifg == 0.) {
-												//torch::nn::init::xavier_uniform_(fwdhlbl2);
-												//rotarypos += 1;
-											//	continue;
-											//}
-											coefminbet = std::max(0.f, loss2.item().toFloat() - lstlsslst);
-											lstlsslstdif = loss2.item().toFloat() - lstlsslst;
-											lstlsslst = loss2.item().toFloat();
-
 											if (1) {
 
 												lsttrgtc = false;
@@ -2315,28 +2186,26 @@ int main(int, char**) {
 										if (dobetr) {
 
 											if (betsitesrmade == 400) {
-												runlr = runlrb;//0.05;//0.00000166666 * loss2.item().toFloat();
-												runlr2 = runlrb2;
-												runlr3 = runlrb3;//0.00000166666 * loss2.item().toFloat();
+												runlr = 1e-6;//0.05;//0.00000166666 * loss2.item().toFloat();
+												runlr2 = 0.0005;
+												runlr3 = 0.0005;//0.00000166666 * loss2.item().toFloat();
 												runlradv = 100.;
-												rfgridlst = abvsgrids.bitwise_and(rfgrid.clone().detach());//rfgrid.clone().detach();
+												rfgridlst = abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
 
 												totrainllst = test2->mem.detach().clone();
 												
 												auto totrainllstlst = totrainllst.clone().detach();
 
 												abvsgridslst = abvsgrids.clone().detach();
-												//if (lstlsslstdif < 0.)
-												abvsgrids = abvsgrids.flatten().bitwise_and(rfgridlst.flatten().flip(0).clone().detach()).bitwise_not().flatten().flip(0).reshape_as(abvsgrids);
-												rfgridlst = reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst.bitwise_not().toType(c10::ScalarType::Float) / 10000.;//(tolrnll2 * rfmsk).clone().detach();
+												
+												abvsgrids = abvsgrids.flatten().toType(c10::ScalarType::Bool).bitwise_and(rfgridlst.flatten().flip(0).clone().detach().toType(c10::ScalarType::Bool)).bitwise_not().toType(c10::ScalarType::Float).flatten().flip(0).reshape_as(abvsgrids);
+												
 #if 1
 												test2->eval();
 												
 												auto [resallpr, reswillwinpr] = test2->forward(totrainllst, abvsgridslst, rfgridlst, fwdhlbl2, nullptr, 0);
 										
-												reswillwino1lst = reswillwino1.defined() ? reswillwino1.clone().detach() : reswillwino1lst;
-												reswillwino1 = resallpr.squeeze(0).clone().detach();
-												reswillwino = torch::tanh(reswillwino1).flatten(1);
+												reswillwino = resallpr.squeeze(0).flatten(1);
 
 
 												if (!torch::all(reswillwino.isfinite()).item().toBool()) {
@@ -2467,7 +2336,6 @@ int main(int, char**) {
 											//ss << "rfgrdif " << (totrainllst - rfgrid).abs() << std::endl;
 											ss << "tolrnll2 " << tolrnl52m << std::endl;
 											ss << "abvsgrids " << abvsgrids << std::endl;
-											ss << "rfmsk " << rfmsk << std::endl;
 											//ss << "abvsgridsvals " << abvsgridsvals << std::endl;
 											if (reswillwino.defined()) {
 												ss << "reswillwino " << reswillwino << std::endl;
@@ -2480,8 +2348,6 @@ int main(int, char**) {
 											ss << "rrvbalmin " << rrbalminv << std::endl;
 											ss << "rrvbalmax " << rrbalmaxv << std::endl;
 											ss << "betsitesrmade400g " << betsitesrmade400g << std::endl;
-											ss << "lssdifg " << lssdifg << std::endl;	
-											ss << "lstlsslstdif " << lstlsslstdif << std::endl;
 										}
 										else {
 											itesrtrain += 1;
