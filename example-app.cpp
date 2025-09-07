@@ -899,7 +899,6 @@ static bool wasahead = false;
 std::atomic_int64_t vbalmaxlst = INT64_MIN;
 std::atomic_int64_t vbalminlst = INT64_MAX;
 float lstvbal2 = 0;
-float lstvbal2s[20];
 std::atomic_int64_t lstlstvbal2 = 0;
 std::atomic_int64_t lstvbal = 0;
 float vbal2 = 0;
@@ -1946,10 +1945,6 @@ int main(int, char**) {
 												rfgrid[0].flatten()[indn] = float(predright);
 												wmsk[0].flatten()[indn] = float(vbal2);
 
-												if (indn % 20 == 0) {
-													std::swap(lstvbal2s[indn / 20], vbal2);
-												}
-
 												totrainl = torch::roll(totrainl, 1);
 
 												bool aboveres = wasab;
@@ -1982,7 +1977,7 @@ int main(int, char**) {
 														tolrnl52m = torch::roll(tolrnl52m, -1, 0);
 														tolrnl52m[-1] = tolrnll2[0];
 													}
-													//std::swap(lstvbal2, vbal2);
+													std::swap(lstvbal2, vbal2);
 													//vbal2 = 0;
 													betsitesrmade400g += 1;
 												}
