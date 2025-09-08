@@ -233,9 +233,9 @@ torch::Tensor hybrid_loss(
 	torch::Tensor pos_msk
 ) {
 
-	torch::Tensor sl_loss = torch::mse_loss(
+	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target//, validation_matrix,
+		sl_target, validation_matrix
 		//pos_msk
 	);
 
@@ -1778,7 +1778,7 @@ int main(int, char**) {
 						bool needregen = true;
 						torch::Tensor rfgrid = torch::zeros({ 1, 20, 20 }).cuda(), rfgridlst = torch::zeros({ 1, 20, 20 }).cuda(),
 							rfmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsklst = torch::zeros({ 1, 20, 20 }).cuda(),
-							posmsk = torch::zeros({ 1, 20, 20 }).cuda();
+							posmsk = torch::zeros({ 1, 20, 20 }).cuda(), itesrt = torch::zeros({ 1, 20, 20 }).cuda(), omsk = torch::zeros({ 1, 20, 20 }).cuda();
 
 						bool optsw = false;
 						betsitesrmade = 0;
@@ -1860,9 +1860,9 @@ int main(int, char**) {
 
 								auto indn = (totrainl.flatten().argmax().item().toInt() + 0) % 400;
 								volatile bool wasab = ((abvsgrids)[0].flatten()[indn] > 0.5).item().toBool();//
-								volatile bool wilwin = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.).item().toBool() : 0;
+								volatile bool wilwin = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
 
-								wasab = wilwin ? wasab : !wasab;
+								wasab = wilwin;// ? wasab : !wasab;
 								bool actualpred = wasab;
 
 								//float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
@@ -1871,7 +1871,7 @@ int main(int, char**) {
 
 								float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
 								volatile float ch = ((float)numtrgtprob / 10000) * 100.;
-								//trainedb = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.).item().toBool() : 0;//!wasab;
+								trainedb = !wasab;//reswillwino.defined() ? ((reswillwino)[0][indn].abs() > 0.3).item().toBool() : 0;//!wasab;
 
 								prabs[modes] = (float)actualpred;
 
@@ -1890,7 +1890,7 @@ int main(int, char**) {
 								volatile int numres, resir, fresir;
 
 
-								volatile float betamntfl = trainedb ? DEF_BET_AMNTF + DEF_BET_AMNTF * 0.04 : DEF_BET_AMNTF;//(1. / 100.) * ((double)(orbal + rrbal) / 100000000.) : DEF_BET_AMNTF;
+								volatile float betamntfl = trainedb ? (1. / 100.) * ((double)(orbal + rrbal) / 100000000.) : DEF_BET_AMNTF;//(1. / 100.) * ((double)(orbal + rrbal) / 100000000.) : DEF_BET_AMNTF;
 								if (betamntfl < DEF_BET_AMNTF) {
 									betamntfl = DEF_BET_AMNTF;
 								}
@@ -1914,10 +1914,14 @@ int main(int, char**) {
 								}
 								if (trainedb) {
 									rrbalv += ((actualdir4 ? !fresir : fresir) ? 1 : -1);
-									rrbalmaxv = std::max(rrbalmaxv, rrbalv).load();
+									
 									rrbalminv = std::min(rrbalminv, rrbalv).load();
 
-
+									auto rrbalmaxvl = +std::max(rrbalmaxv, rrbalv);
+									if (rrbalmaxvl == rrbalv) {
+										betamntflss += betamntflss * 0.04;
+									}
+									rrbalmaxv = rrbalmaxvl;
 								}
 
 								float avret = !fresir ? mul - 1. : -1.;
@@ -1926,9 +1930,10 @@ int main(int, char**) {
 								rmaxbal = std::max(rrbal, rmaxbal).load();
 								rminbal = std::min(rrbal, rminbal).load();
 
-								vbal2 += (!fresir ? 1 : -1);
+								vbal2 += avret;//(!fresir ? 1 : -1);
 
 								vbal += (!fresir ? 1 : -1);
+								
 
 
 								savestuff(false, *test2, 0);
@@ -1950,6 +1955,28 @@ int main(int, char**) {
 								rfgrid[0].flatten()[indn] = float(predright);
 								wmsk[0].flatten()[indn] = (+vbal2);
 
+								/*if (predright) {
+									auto indn1 = indn / 20;
+									auto indn0 = indn % 20;
+									bool zeroed = false;
+									int y = 0;
+									do {
+										itesrt[0][indn1][(y + indn0) % 20] += 0.1;
+										if ((itesrt[0][indn1][(y + indn0) % 20] > 1.).item().toFloat()) {
+											if (!zeroed)
+												itesrt[0][indn1][(y + indn0) % 20] = 0.;
+											else
+												itesrt[0][indn1][(y + indn0) % 20] -= 0.1;
+											zeroed = true;
+										}
+										else {
+											break;
+										}
+										//if (zeroed)
+										//	itesrt[0][indn1][y] -= 0.1;
+									} while (y++ < 20);
+								}*/
+
 								totrainl = torch::roll(totrainl, 1);
 
 								bool aboveres = wasab;
@@ -1962,11 +1989,13 @@ int main(int, char**) {
 									btrain = totrainlm.defined();
 									dobetr = !btrain;
 									needregen = vbal2 < 0;
-									tolrnll2 = wmsk - wmsklst;//abvsgrids.clone().detach();//.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-									//rfmsk = ((wmsklst.flatten().softmax(0).reshape_as(rfgrid) / wmsk.flatten().softmax(0).reshape_as(rfgrid)));//(rfgrid + 1.) / 2.;//((rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
+									auto otherflp = (abvsgrids.toType(c10::ScalarType::Bool).logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
+									omsk = (abvsgrids.toType(c10::ScalarType::Bool) * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
+									tolrnll2 = reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
+									rfmsk = (rfgrid.clone().detach() + 1.) * (wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									//wmsklst = wmsk.clone().detach();
-									if (vbal2 < lstvbal2) {
+									if (vbal2 < lstvbal2, 1) {
 										//trainedb = betsitesrmade400g > 1;
 										fwdhlbl2.copy_(fwdhlblout.contiguous());
 									}
@@ -1983,7 +2012,9 @@ int main(int, char**) {
 										tolrnl52m = torch::roll(tolrnl52m, -1, 0);
 										tolrnl52m[-1] = tolrnll2[0];
 									}
+									
 									std::swap(lstvbal2, vbal2);
+									//lstvbal2 = vbal2;
 									//vbal2 = 0;
 									betsitesrmade400g += 1;
 								}
@@ -2323,7 +2354,7 @@ int main(int, char**) {
 									runlr2 = runlrb2;
 									runlr3 = runlrb3;//0.00000166666 * loss2.item().toFloat();
 									runlradv = 100.;
-									rfgridlst = abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
+									rfgridlst = omsk.clone().detach();//abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
 
 									totrainllst = test2->mem.detach().clone();
 
@@ -2332,7 +2363,7 @@ int main(int, char**) {
 									abvsgridslst = abvsgrids.clone().detach();
 									//if (lstlsslstdif < 0.)
 									abvsgrids = abvsgrids.flatten().toType(c10::ScalarType::Bool).bitwise_and(rfgridlst.flatten().flip(0).clone().detach().toType(c10::ScalarType::Bool)).bitwise_not().toType(c10::ScalarType::Float).flatten().flip(0).reshape_as(abvsgrids);
-									rfgridlst = reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
+									//rfgridlst = itesrt.clone().detach();//reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
 #if 1
 									test2->eval();
 
@@ -2340,7 +2371,7 @@ int main(int, char**) {
 
 									reswillwino1lst = reswillwino1.defined() ? reswillwino1.clone().detach() : reswillwino1lst;
 									reswillwino1 = resallpr.squeeze(0).clone().detach();
-									reswillwino = reswillwino1.flatten(1);
+									reswillwino = reswillwino1.sigmoid().flatten(1);
 
 
 									if (!torch::all(reswillwino.isfinite()).item().toBool()) {
