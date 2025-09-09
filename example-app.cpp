@@ -235,7 +235,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, validation_matrix
+		sl_target//, validation_matrix
 		//pos_msk
 	);
 
@@ -1989,10 +1989,13 @@ int main(int, char**) {
 									btrain = totrainlm.defined();
 									dobetr = !btrain;
 									needregen = vbal2 < 0;
-									auto otherflp = (abvsgrids.toType(c10::ScalarType::Bool).logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
-									omsk = (abvsgrids.toType(c10::ScalarType::Bool) * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
+									auto tmp = ((wmsk / (wmsklst)).sigmoid() > 0.).toType(c10::ScalarType::Bool);
+									auto otherflp = (tmp.logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
+									omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
 									tolrnll2 = omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
-									rfmsk = abvsgrids.toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float) * (wmsk / (wmsklst)).sigmoid();// + abvsgrids.toType(c10::ScalarType::Bool).toType(c10::ScalarType::Float)//(wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
+									
+									
+									//rfmsk = (tmp > 0.)//abvsgrids.toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float) * ;// + abvsgrids.toType(c10::ScalarType::Bool).toType(c10::ScalarType::Float)//(wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									//wmsklst = wmsk.clone().detach();
 									if (vbal2 < lstvbal2, 1) {
