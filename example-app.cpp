@@ -1962,7 +1962,7 @@ int main(int, char**) {
 									posmsk[0].flatten()[indn] = 0.;
 								}
 
-								if (predright) {
+								/*if (predright) {
 									auto indn1 = indn / 20;
 									auto indn0 = indn % 20;
 									bool zeroed = false;
@@ -1982,7 +1982,7 @@ int main(int, char**) {
 										//if (zeroed)
 										//	itesrt[0][indn1][y] -= 0.1;
 									} while (y++ < 20);
-								}
+								}*/
 
 								totrainl = torch::roll(totrainl, 1);
 
@@ -2007,7 +2007,7 @@ int main(int, char**) {
 									//wmsklst = wmsk.clone().detach();
 									if (vbal2 < lstvbal2, 1) {
 										//trainedb = betsitesrmade400g > 1;
-										fwdhlbl2.copy_(fwdhlblout.contiguous());
+										//fwdhlbl2.copy_(fwdhlblout.contiguous());
 									}
 									if (1) {
 										if (0)
@@ -2364,7 +2364,7 @@ int main(int, char**) {
 									runlr2 = runlrb2;
 									runlr3 = runlrb3;//0.00000166666 * loss2.item().toFloat();
 									runlradv = 100.;
-									rfgridlst = ((itesrt * (abvsgrids)) * 10. + itesrt * (abvsgrids - 1.).abs() * -10.).clone().detach();//tolrnll2.clone().detach();//abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(tolrnll2.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
+									rfgridlst = reswillwino.defined() ? (reswillwino1).clone().detach().reshape_as(rfgridlst).toType(c10::ScalarType::Float) : rfgridlst;//tolrnll2.clone().detach();//abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(tolrnll2.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
 
 									totrainllst = test2->mem.detach().clone();
 
@@ -2375,6 +2375,7 @@ int main(int, char**) {
 									abvsgrids = abvsgrids.flatten().toType(c10::ScalarType::Bool).bitwise_and(rfgrid.flatten().flip(0).clone().detach().toType(c10::ScalarType::Bool)).bitwise_not().toType(c10::ScalarType::Float).flatten().flip(0).reshape_as(abvsgrids);
 									//rfgridlst = itesrt.clone().detach();//reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
 #if 1
+									fwdhlbl2.copy_(fwdhlblout.contiguous());
 									test2->eval();
 
 									auto [resallpr, reswillwinpr] = test2->forward(totrainllst, abvsgridslst, rfgridlst, fwdhlbl2, nullptr, 0);
