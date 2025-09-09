@@ -1862,7 +1862,7 @@ int main(int, char**) {
 								volatile bool wasab = ((abvsgrids)[0].flatten()[indn] > 0.5).item().toBool();//
 								volatile bool wilwin = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
 
-								wasab = !wilwin;// ? wasab : !wasab;
+								wasab = wilwin;// ? wasab : !wasab;
 								bool actualpred = wasab;
 
 								//float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
@@ -1955,7 +1955,7 @@ int main(int, char**) {
 								rfgrid[0].flatten()[indn] = float(predright);
 								wmsk[0].flatten()[indn] = (+vbal2);
 
-								if (!!fresir) {
+								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
 								}
 								else {
