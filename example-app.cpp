@@ -1999,7 +1999,7 @@ int main(int, char**) {
 									//auto tmp = ((wmsk / (wmsklst)).sigmoid() > 0.).toType(c10::ScalarType::Bool);
 									//auto otherflp = (tmp.logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
-									tolrnll2 = reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
+									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
 									//tolrnll2 = ((posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool).logical_not() * tolrnll2 + (posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool) * rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
 									
 									//rfmsk = (tmp > 0.)//abvsgrids.toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float) * ;// + abvsgrids.toType(c10::ScalarType::Bool).toType(c10::ScalarType::Float)//(wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
@@ -2007,7 +2007,7 @@ int main(int, char**) {
 									//wmsklst = wmsk.clone().detach();
 									if (vbal2 < lstvbal2, 1) {
 										//trainedb = betsitesrmade400g > 1;
-										//fwdhlbl2.copy_(fwdhlblout.contiguous());
+										fwdhlbl2.copy_(fwdhlblout.contiguous());
 									}
 									if (1) {
 										if (0)
@@ -2375,7 +2375,6 @@ int main(int, char**) {
 									abvsgrids = abvsgrids.flatten().toType(c10::ScalarType::Bool).bitwise_and(rfgrid.flatten().flip(0).clone().detach().toType(c10::ScalarType::Bool)).bitwise_not().toType(c10::ScalarType::Float).flatten().flip(0).reshape_as(abvsgrids);
 									//rfgridlst = itesrt.clone().detach();//reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
 #if 1
-									fwdhlbl2.copy_(fwdhlblout.contiguous());
 									test2->eval();
 
 									auto [resallpr, reswillwinpr] = test2->forward(totrainllst, abvsgridslst, rfgridlst, fwdhlbl2, nullptr, 0);
