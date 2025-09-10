@@ -2000,11 +2000,11 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-									auto minv = posmsk.abs().min();
+									/*auto minv = posmsk.abs().min();
 									if (minv.item().toFloat() > 0.) {
 										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk + minv);
-									}
+									}*/
 									trainedb = false;
 									btrain = totrainlm.defined();
 									dobetr = !btrain;
@@ -2389,6 +2389,8 @@ int main(int, char**) {
 									//rfgridlst = itesrt.clone().detach();//reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
 #if 1
 									test2->eval();
+									if (loss2.item().toFloat() > 0.6, vbal2 > lstvbal2)
+										posmsk.zero_();
 
 									auto [resallpr, reswillwinpr] = test2->forward(totrainllst, abvsgridslst, rfgridlst, fwdhlbl2, nullptr, 0);
 
