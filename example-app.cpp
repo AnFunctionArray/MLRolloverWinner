@@ -1963,12 +1963,12 @@ int main(int, char**) {
 									posmsk[0].flatten()[indn] -= 1.;
 								}
 
-								if (posmsk[0].flatten()[indn].item().toFloat() < -100.) {
-									posmsk[0].flatten()[indn] = 100. + (100. + posmsk[0].flatten()[indn].item().toFloat());
+								/*if (posmsk[0].flatten()[indn].item().toFloat() < -10.) {
+									posmsk[0].flatten()[indn] = 10. + (10. + posmsk[0].flatten()[indn].item().toFloat());
 								}
-								else if (posmsk[0].flatten()[indn].item().toFloat() > 100.) {
-									posmsk[0].flatten()[indn] = -100. + -(100. - posmsk[0].flatten()[indn].item().toFloat());
-								}
+								else if (posmsk[0].flatten()[indn].item().toFloat() > 10.) {
+									posmsk[0].flatten()[indn] = -10. + -(10. - posmsk[0].flatten()[indn].item().toFloat());
+								}*/
 
 								/*if (predright) {
 									auto indn1 = indn / 20;
