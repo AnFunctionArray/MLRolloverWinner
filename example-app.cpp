@@ -1958,9 +1958,11 @@ int main(int, char**) {
 
 								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
+									posmskmsk[0].flatten()[indn] = 1.;
 								}
 								else {
 									posmsk[0].flatten()[indn] -= 1.;
+									posmskmsk[0].flatten()[indn] = 0.;
 								}
 
 								/*if (posmsk[0].flatten()[indn].item().toFloat() < -10.) {
@@ -2000,11 +2002,11 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-									/*auto minv = posmsk.abs().min();
+									auto minv = posmsk.abs().min();
 									if (minv.item().toFloat() > 0.) {
 										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk + minv);
-									}*/
+									}
 									trainedb = false;
 									btrain = totrainlm.defined();
 									dobetr = !btrain;
@@ -2014,7 +2016,7 @@ int main(int, char**) {
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
 									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
 									//tolrnll2 = ((posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool).logical_not() * tolrnll2 + (posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool) * rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-									posmskmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk).clone().detach();
+									posmskmsk = (posmskmsk * posmsk).abs().clone().detach();
 									//rfmsk = (tmp > 0.)//abvsgrids.toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float) * ;// + abvsgrids.toType(c10::ScalarType::Bool).toType(c10::ScalarType::Float)//(wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									//wmsklst = wmsk.clone().detach();
@@ -2389,8 +2391,8 @@ int main(int, char**) {
 									//rfgridlst = itesrt.clone().detach();//reswillwino1lst.defined() ? (reswillwino1 - reswillwino1lst).clone().detach() : rfgridlst;//(tolrnll2 * rfmsk).clone().detach();
 #if 1
 									test2->eval();
-									if (loss2.item().toFloat() > 0.6, vbal2 > lstvbal2)
-										posmsk.zero_();
+									//if (loss2.item().toFloat() > 0.6, vbal2 > lstvbal2, (betsitesrmade400g % 7) == 0)
+									//	posmsk.zero_();
 
 									auto [resallpr, reswillwinpr] = test2->forward(totrainllst, abvsgridslst, rfgridlst, fwdhlbl2, nullptr, 0);
 
