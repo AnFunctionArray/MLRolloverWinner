@@ -2020,7 +2020,7 @@ int main(int, char**) {
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
 									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
 									//tolrnll2 = ((posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool).logical_not() * tolrnll2 + (posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool) * rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-									posmskmsk = ((posmskmsk * posmskw) + (posmskmsk - 1.).abs() * posmskl).clone().detach();
+									//posmskmsk = ((posmskmsk * posmskw) + (posmskmsk - 1.).abs() * posmskl).clone().detach();
 									//rfmsk = (tmp > 0.)//abvsgrids.toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float) * ;// + abvsgrids.toType(c10::ScalarType::Bool).toType(c10::ScalarType::Float)//(wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									//wmsklst = wmsk.clone().detach();
