@@ -1779,7 +1779,8 @@ int main(int, char**) {
 						torch::Tensor rfgrid = torch::zeros({ 1, 20, 20 }).cuda(), rfgridlst = torch::zeros({ 1, 20, 20 }).cuda(),
 							rfmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsk = torch::zeros({ 1, 20, 20 }).cuda(), wmsklst = torch::zeros({ 1, 20, 20 }).cuda(),
 							posmsk = torch::zeros({ 1, 20, 20 }).cuda(), itesrt = torch::zeros({ 1, 20, 20 }).cuda(), omsk = torch::zeros({ 1, 20, 20 }).cuda(),
-							posmskmsk = torch::zeros({ 1, 20, 20 }).cuda();
+							posmskmsk = torch::zeros({ 1, 20, 20 }).cuda(), posmskw = torch::zeros({ 1, 20, 20 }).cuda(),
+							posmskl = torch::zeros({ 1, 20, 20 }).cuda();
 
 						bool optsw = false;
 						betsitesrmade = 0;
@@ -1957,11 +1958,11 @@ int main(int, char**) {
 								wmsk[0].flatten()[indn] = (+vbal2);
 
 								if (!fresir) {
-									posmsk[0].flatten()[indn] += 1.;
+									posmskw[0].flatten()[indn] += 1.;
 									posmskmsk[0].flatten()[indn] = 1.;
 								}
 								else {
-									posmsk[0].flatten()[indn] -= 1.;
+									posmskl[0].flatten()[indn] += 1.;
 									posmskmsk[0].flatten()[indn] = 0.;
 								}
 
@@ -2002,10 +2003,13 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-									auto minv = posmsk.abs().min();
+									auto minv = posmskw.abs().min();
 									if (minv.item().toFloat() > 0.) {
-										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
-											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk + minv);
+										posmskw = (posmskw - minv);
+									}
+									minv = posmskl.abs().min();
+									if (minv.item().toFloat() > 0.) {
+										posmskl = (posmskl - minv);
 									}
 									trainedb = false;
 									btrain = totrainlm.defined();
@@ -2016,7 +2020,7 @@ int main(int, char**) {
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
 									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
 									//tolrnll2 = ((posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool).logical_not() * tolrnll2 + (posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool) * rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
-									posmskmsk = (posmskmsk * posmsk).abs().clone().detach();
+									posmskmsk = ((posmskmsk * posmskw) + (posmskmsk - 1.).abs() * posmskl).clone().detach();
 									//rfmsk = (tmp > 0.)//abvsgrids.toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float) * ;// + abvsgrids.toType(c10::ScalarType::Bool).toType(c10::ScalarType::Float)//(wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									//wmsklst = wmsk.clone().detach();
@@ -2530,7 +2534,7 @@ int main(int, char**) {
 								ss << "tolrnll2 " << tolrnl52m << std::endl;
 								ss << "abvsgrids " << abvsgrids << std::endl;
 								ss << "rfmsk " << rfmsk << std::endl;
-								ss << "posmsk " << posmsk << std::endl;
+								ss << "posmsk " << posmskmsk << std::endl;
 								//ss << "abvsgridsvals " << abvsgridsvals << std::endl;
 								if (reswillwino.defined()) {
 									ss << "reswillwino " << reswillwino << std::endl;
