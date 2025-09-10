@@ -2000,6 +2000,11 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
+									auto minv = posmsk.abs().min();
+									if (minv.item().toFloat() > 0.) {
+										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
+											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk + minv);
+									}
 									trainedb = false;
 									btrain = totrainlm.defined();
 									dobetr = !btrain;
