@@ -2056,9 +2056,9 @@ int main(int, char**) {
 										tolrnl52m[-1] = tolrnll2[0];
 									}
 									
-									std::swap(lstvbal2, vbal2);
-									//lstvbal2 = vbal2;
-									//vbal2 = 0;
+									//std::swap(lstvbal2, vbal2);
+									lstvbal2 = vbal2;
+									vbal2 = 0;
 									betsitesrmade400g += 1;
 								}
 
