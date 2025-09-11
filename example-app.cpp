@@ -2015,7 +2015,7 @@ int main(int, char**) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}
-									posmskmsk = (wmsk > 0.).toType(c10::ScalarType::Float) * posmsk +
+									posmskmsk = (wmsk > 0.).toType(c10::ScalarType::Float) * posmsk + posmsk.max() +
 										((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * posmsk + posmsk.max());
 									//posmsk /= 2.;
 									trainedb = false;
