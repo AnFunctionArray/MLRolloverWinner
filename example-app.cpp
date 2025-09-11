@@ -236,7 +236,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, {},//, validation_matrix
+		sl_target, validation_matrix,
 		pos_msk
 	);
 
@@ -1955,7 +1955,7 @@ int main(int, char**) {
 
 								}
 								//rfgrid[0].flatten()[indn] = float(reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 1.);
-								wmsk[0].flatten()[indn] = (!fresir);
+								wmsk[0].flatten()[indn] = (fresir);
 
 								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
@@ -2024,7 +2024,7 @@ int main(int, char**) {
 									//auto tmp = ((wmsk / (wmsklst)).sigmoid() > 0.).toType(c10::ScalarType::Bool);
 									//auto otherflp = (tmp.logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
-									tolrnll2 = reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
+									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
 									//tolrnll2 = ((posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool).logical_not() * tolrnll2 + (posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool) * rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
 									//posmskmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk + (posmsk > 0.).toType(c10::ScalarType::Float) * ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk).max() +
 									//	((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk).min().abs() + ((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk)).clone().detach();
@@ -2056,9 +2056,9 @@ int main(int, char**) {
 										tolrnl52m[-1] = tolrnll2[0];
 									}
 									
-									//std::swap(lstvbal2, vbal2);
-									lstvbal2 = vbal2;
-									vbal2 = 0;
+									std::swap(lstvbal2, vbal2);
+									//lstvbal2 = vbal2;
+									//vbal2 = 0;
 									betsitesrmade400g += 1;
 								}
 
@@ -2089,7 +2089,7 @@ int main(int, char**) {
 									}
 
 									loss2 =
-										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), rfmsk, posmskmsk);//.mean(1).flatten());
+										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), wmsk, posmskmsk);//.mean(1).flatten());
 
 
 									float loss = loss2.item().toFloat();
