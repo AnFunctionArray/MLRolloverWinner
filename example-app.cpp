@@ -1834,7 +1834,9 @@ int main(int, char**) {
 									fresir = wasab ? !((numres > numtrgt)) : !((numres < numtrgt));
 								}
 
+								bool predright = !resir ? actualpred : !actualpred;
 
+								fresir = !(predright == wasabgrd);
 
 
 								if (!fresir && reswillwino.defined()) {
@@ -1869,7 +1871,7 @@ int main(int, char**) {
 
 
 
-								bool predright = !resir ? actualpred : !actualpred;
+								
 
 								bool needchg = false;
 
