@@ -1954,17 +1954,17 @@ int main(int, char**) {
 								for (int y = 0; y < 1; ++y) {
 
 								}
-								//rfgrid[0].flatten()[indn] = float(predright);
+								rfgrid[0].flatten()[indn] = float(reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 1.);
 								wmsk[0].flatten()[indn] = (+vbal2);
 
 								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
-									rfgrid[0].flatten()[indn] = float(predright);
+									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = 1.;
 								}
 								else {
 									posmsk[0].flatten()[indn] -= 1.;
-									rfgrid[0].flatten()[indn] = float(wasab);
+									rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
 									//posmskmsk[0].flatten()[indn] = 0.;
 								}
 
