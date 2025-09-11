@@ -1954,18 +1954,19 @@ int main(int, char**) {
 								for (int y = 0; y < 1; ++y) {
 
 								}
-								rfgrid[0].flatten()[indn] = float(reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 1.);
-								wmsk[0].flatten()[indn] = (+vbal2);
+								//rfgrid[0].flatten()[indn] = float(reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 1.);
+								wmsk[0].flatten()[indn] = (!fresir);
 
 								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
 									//rfgrid[0].flatten()[indn] = float(predright);
-									//posmskmsk[0].flatten()[indn] = 1.;
+									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
 									posmsk[0].flatten()[indn] -= 1.;
-									rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
+									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
 									//posmskmsk[0].flatten()[indn] = 0.;
+									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten().max() + posmsk[0].flatten()[indn];
 								}
 
 								/*if (posmsk[0].flatten()[indn].item().toFloat() < -10.) {
@@ -2010,6 +2011,12 @@ int main(int, char**) {
 										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk + minv);
 									}
+									if (reswillwino.defined()) {
+										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
+											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
+									}
+									posmskmsk = (wmsk > 0.).toType(c10::ScalarType::Float) * posmsk +
+										((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * posmsk + posmsk.max());
 									//posmsk /= 2.;
 									trainedb = false;
 									btrain = totrainlm.defined();
@@ -2022,7 +2029,7 @@ int main(int, char**) {
 									//tolrnll2 = ((posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool).logical_not() * tolrnll2 + (posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool) * rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
 									//posmskmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk + (posmsk > 0.).toType(c10::ScalarType::Float) * ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk).max() +
 									//	((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk).min().abs() + ((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk)).clone().detach();
-									posmskmsk = posmsk.clone().detach();//.clip(0.);
+									//posmskmsk = posmsk.clone().detach();//.clip(0.);
 									//posmsk /= posmsk.abs().max();
 									//rfmsk = (tmp > 0.)//abvsgrids.toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float) * ;// + abvsgrids.toType(c10::ScalarType::Bool).toType(c10::ScalarType::Float)//(wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
