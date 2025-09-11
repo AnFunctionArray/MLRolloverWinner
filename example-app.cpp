@@ -1837,6 +1837,8 @@ int main(int, char**) {
 								bool predright = !resir ? actualpred : !actualpred;
 
 								fresir = !(predright == wasabgrd);
+								if (!wilwin)
+									fresir = !fresir;
 
 
 								if (!fresir && reswillwino.defined()) {
