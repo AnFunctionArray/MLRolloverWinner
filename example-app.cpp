@@ -2399,7 +2399,7 @@ int main(int, char**) {
 									runlr3 = runlrb3;//0.00000166666 * loss2.item().toFloat();
 									runlradv = 100.;
 									rfgridlst = reswillwino.defined() ? (reswillwino1).clone().detach().reshape_as(rfgridlst).toType(c10::ScalarType::Float) : rfgridlst;//tolrnll2.clone().detach();//abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(tolrnll2.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
-									rfgridlst *= 100.;
+
 									totrainllst = test2->mem.detach().clone();
 
 									auto totrainllstlst = totrainllst.clone().detach();
