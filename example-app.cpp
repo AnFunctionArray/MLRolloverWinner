@@ -235,7 +235,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, validation_matrix,
+		sl_target, {},//, validation_matrix
 		pos_msk
 	);
 
@@ -1954,7 +1954,7 @@ int main(int, char**) {
 
 								}
 								rfgrid[0].flatten()[indn] = float(predright);
-								wmsk[0].flatten()[indn] = (avret);
+								wmsk[0].flatten()[indn] = (+vbal2);
 
 								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
@@ -2075,7 +2075,7 @@ int main(int, char**) {
 									}
 
 									loss2 =
-										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), wmsk, posmskmsk);//.mean(1).flatten());
+										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), rfmsk, posmskmsk);//.mean(1).flatten());
 
 
 									float loss = loss2.item().toFloat();
@@ -2129,12 +2129,12 @@ int main(int, char**) {
 											zrgr = true;
 
 										}
-										optim[1]->param_groups()[0].options().set_lr(runlr);
-										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100.);
-										optim[1]->param_groups()[1].options().set_lr(runlr2);
-										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100.);
-										optim[1]->param_groups()[2].options().set_lr(runlr3);
-										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100.);
+										optim[1]->param_groups()[0].options().set_lr(runlr * loss / std::abs(loss));
+										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100. * loss / std::abs(loss));
+										optim[1]->param_groups()[1].options().set_lr(runlr2 * loss / std::abs(loss));
+										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100. * loss / std::abs(loss));
+										optim[1]->param_groups()[2].options().set_lr(runlr3 * loss / std::abs(loss));
+										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100. * loss / std::abs(loss));
 
 									}
 
