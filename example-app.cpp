@@ -235,7 +235,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, {},//, validation_matrix
+		sl_target, validation_matrix,
 		pos_msk
 	);
 
@@ -1954,7 +1954,7 @@ int main(int, char**) {
 
 								}
 								rfgrid[0].flatten()[indn] = float(predright);
-								wmsk[0].flatten()[indn] = (+vbal2);
+								wmsk[0].flatten()[indn] = (avret);
 
 								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
@@ -2075,7 +2075,7 @@ int main(int, char**) {
 									}
 
 									loss2 =
-										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), rfmsk, posmskmsk);//.mean(1).flatten());
+										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), wmsk, posmskmsk);//.mean(1).flatten());
 
 
 									float loss = loss2.item().toFloat();
