@@ -37,6 +37,7 @@ static torch::Tensor todrawres;
 typedef torch::optim::LBFGSOptions tgt_optim_opts_t;
 typedef torch::optim::LBFGS tgt_optim_t;
 static float lssdifovg = FLT_MAX;
+static float lrdir = 1;
 static int itesrwin = 0;
 static float acccoef = 0.;
 static int modes = 0;
@@ -1837,12 +1838,12 @@ int main(int, char**) {
 								sttteediters = 0;
 								lssdiftrgt = 1e-5;
 								fsw = true;
-								optim[1]->param_groups()[0].options().set_lr(runlr);
-								dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100.);
-								optim[1]->param_groups()[1].options().set_lr(runlr2);
-								dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100.);
-								optim[1]->param_groups()[2].options().set_lr(runlr3);
-								dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100.);
+								optim[1]->param_groups()[0].options().set_lr(runlr * lrdir);
+								dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100. * lrdir);
+								optim[1]->param_groups()[1].options().set_lr(runlr2 * lrdir);
+								dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100. * lrdir);
+								optim[1]->param_groups()[2].options().set_lr(runlr3 * lrdir);
+								dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100. * lrdir);
 
 							}
 
@@ -2015,7 +2016,7 @@ int main(int, char**) {
 									//auto tmp = ((wmsk / (wmsklst)).sigmoid() > 0.).toType(c10::ScalarType::Bool);
 									//auto otherflp = (tmp.logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
-									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
+									tolrnll2 = rfgrid.clone().detach();//reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
 									//tolrnll2 = ((posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool).logical_not() * tolrnll2 + (posmsk > 1.).clone().detach().toType(c10::ScalarType::Bool) * rfgrid.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);
 									//posmskmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk + (posmsk > 0.).toType(c10::ScalarType::Float) * ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk).max() +
 									//	((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk).min().abs() + ((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk)).clone().detach();
@@ -2024,10 +2025,15 @@ int main(int, char**) {
 									//rfmsk = (tmp > 0.)//abvsgrids.toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float) * ;// + abvsgrids.toType(c10::ScalarType::Bool).toType(c10::ScalarType::Float)//(wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									//wmsklst = wmsk.clone().detach();
-									if (vbal2 < lstvbal2, 1) {
+									fwdhlbl2.copy_(fwdhlblout.contiguous());
+									/*if (vbal2 < lstvbal2) {
+										lrdir = 1.;
 										//trainedb = betsitesrmade400g > 1;
-										fwdhlbl2.copy_(fwdhlblout.contiguous());
+										
 									}
+									else {
+										lrdir = -1.;
+									}*/
 									if (1) {
 										if (0)
 											tolrnl52m = torch::vstack({ tolrnl52m, tolrnll2 }).cuda();
@@ -2112,7 +2118,8 @@ int main(int, char**) {
 									auto& runlrr = (!optsw, true ? runlr : runlr2);
 
 									if (1) {
-										if ((std::abs(lssdif) < runlr) != (lssdif < 0.)) {
+										bool con = (std::abs(lssdif) < runlr) != (lssdif < 0.);
+										if (lrdir < 0. ? !con : con) {
 
 											runlr += runlr / runlradv;
 											runlr2 += runlr2 / runlradv;
@@ -2129,12 +2136,12 @@ int main(int, char**) {
 											zrgr = true;
 
 										}
-										optim[1]->param_groups()[0].options().set_lr(runlr * loss / std::abs(loss));
-										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100. * loss / std::abs(loss));
-										optim[1]->param_groups()[1].options().set_lr(runlr2 * loss / std::abs(loss));
-										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100. * loss / std::abs(loss));
-										optim[1]->param_groups()[2].options().set_lr(runlr3 * loss / std::abs(loss));
-										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100. * loss / std::abs(loss));
+										optim[1]->param_groups()[0].options().set_lr(runlr* lrdir);
+										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[0].options()).weight_decay(runlr * 100. * lrdir);
+										optim[1]->param_groups()[1].options().set_lr(runlr2* lrdir);
+										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[1].options()).weight_decay(runlr2 * 100. * lrdir);
+										optim[1]->param_groups()[2].options().set_lr(runlr3* lrdir);
+										dynamic_cast<torch::optim::NAdamOptions&>(optim[1]->param_groups()[2].options()).weight_decay(runlr3 * 100. * lrdir);
 
 									}
 
