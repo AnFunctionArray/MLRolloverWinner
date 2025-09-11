@@ -1881,7 +1881,7 @@ int main(int, char**) {
 								for (int y = 0; y < 1; ++y) {
 
 								}
-								//rfgrid[0].flatten()[indn] = float(reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 1.);
+								rfgrid[0].flatten()[indn] = float(predright);
 								wmsk[0].flatten()[indn] = (!fresir);
 
 								if (!fresir, predright == wasabgrd) {
