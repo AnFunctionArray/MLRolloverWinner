@@ -2016,7 +2016,7 @@ int main(int, char**) {
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
 									auto maxmx = posmsk.max() + posmsk.min().abs();
-									posmskmsk = (wmsk > 0.).toType(c10::ScalarType::Float) * posmsk + maxmx +
+									posmskmsk = (wmsk > 0.).toType(c10::ScalarType::Float) * posmsk.abs() + maxmx +
 										(maxmx - (wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * posmsk.abs());
 									//posmsk /= 2.;
 									trainedb = false;
