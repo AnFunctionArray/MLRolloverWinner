@@ -154,79 +154,6 @@ static float resallmena;
 static bool avmed = false;
 static bool avmed2 = false;
 std::streambuf* orig_buf;
-struct RotaryPositionalEmbeddingsImpl : torch::nn::Cloneable<RotaryPositionalEmbeddingsImpl> {
-
-	int dim;
-	int max_seq_len = 4096;
-	int seq_len;
-	int base = 10000;
-	torch::Tensor theta, seq_idx, idx_theta, cache, rope_cache, xshaped, x_out;
-	void reset() override {
-		rope_init();
-	}
-	RotaryPositionalEmbeddingsImpl(int dima, int max_seq_lena = 4096, int basea = 10000) {
-		base = basea;
-		max_seq_len = max_seq_lena;
-		dim = dima;
-		reset();
-	}
-
-	void rope_init() {
-		theta = torch::tensor({ 1.0 }) / (
-			torch::tensor({ base }).toType(torch::ScalarType::Float).pow(torch::arange(0, dim, 2).index({ torch::indexing::Slice(torch::indexing::None, dim / 2) }).toType(torch::ScalarType::Float) / dim)
-			);
-		register_buffer("theta", theta);
-		build_rope_cache(max_seq_len);
-	}
-
-	void build_rope_cache(int max_seq_len = 4096) {
-
-		seq_idx = torch::arange(
-			max_seq_len, torch::dtype(torch::ScalarType::Float)
-		);
-
-
-		idx_theta = torch::einsum("i, j -> ij", { seq_idx, theta }).toType(torch::ScalarType::Float);
-
-
-		cache = torch::stack({ torch::cos(idx_theta), torch::sin(idx_theta) }, -1);
-		register_buffer("cache", cache);
-	}
-	torch::Tensor forward(
-		torch::Tensor x, std::optional<torch::Tensor> input_pos) {
-
-		seq_len = x.size(1);
-
-		rope_cache = (
-			input_pos ? cache[input_pos.value().item()] : cache.index({ torch::indexing::Slice(torch::indexing::None, seq_len) })// if input_pos is None else self.cache[input_pos]
-			);
-
-		auto stakcsizes = x.sizes().vec();
-		stakcsizes.back() /= 2;
-		stakcsizes.append_range(std::vector{ 2 });
-
-		xshaped = x.toType(torch::ScalarType::Float).reshape(stakcsizes);
-
-
-		rope_cache = rope_cache.view({ -1, xshaped.size(1), 1, xshaped.size(3), 2 });
-
-		x_out = torch::stack(
-			{
-				xshaped.index({ "...", 0}) * rope_cache.index({ "...", 0})
-					- xshaped.index({ "...", 1}) * rope_cache.index({ "...", 1}),
-					xshaped.index({ "...", 1}) * rope_cache.index({ "...", 0})
-					+ xshaped.index({ "...", 0}) * rope_cache.index({ "...", 1}),
-			},
-			-1);
-
-
-		x_out = x_out.flatten(3);
-		return x_out;
-	}
-};
-
-TORCH_MODULE(RotaryPositionalEmbeddings);
-static int64_t rotarypos = 0;
 torch::Tensor hybrid_loss(
 	torch::Tensor model_output,
 	torch::Tensor sl_target,
@@ -236,7 +163,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, validation_matrix,
+		sl_target, {},//, validation_matrix
 		pos_msk
 	);
 
@@ -1861,10 +1788,10 @@ int main(int, char**) {
 
 
 								auto indn = (totrainl.flatten().argmax().item().toInt() + 0) % 400;
-								volatile bool wasab = ((abvsgrids)[0].flatten()[indn] > 0.5).item().toBool();//
+								volatile bool wasabgrd = ((abvsgrids)[0].flatten()[indn] > 0.5).item().toBool();//
 								volatile bool wilwin = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
 
-								wasab = wilwin;// ? wasab : !wasab;
+								volatile bool wasab = wilwin;// ? wasab : !wasab;
 								bool actualpred = wasab;
 
 								//float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
@@ -1955,9 +1882,9 @@ int main(int, char**) {
 
 								}
 								//rfgrid[0].flatten()[indn] = float(reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 1.);
-								wmsk[0].flatten()[indn] = (fresir);
+								wmsk[0].flatten()[indn] = (!fresir);
 
-								if (!fresir) {
+								if (!fresir, predright == wasabgrd) {
 									posmsk[0].flatten()[indn] += 1.;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
@@ -2089,7 +2016,7 @@ int main(int, char**) {
 									}
 
 									loss2 =
-										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), wmsk, posmskmsk);//.mean(1).flatten());
+										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), rfmsk, posmskmsk);//.mean(1).flatten());
 
 
 									float loss = loss2.item().toFloat();
