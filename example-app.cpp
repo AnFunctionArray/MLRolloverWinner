@@ -2015,8 +2015,9 @@ int main(int, char**) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
-									posmskmsk = (wmsk > 0.).toType(c10::ScalarType::Float) * posmsk + posmsk.max() +
-										((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * posmsk + posmsk.max());
+									auto maxmx = posmsk.max() + posmsk.min().abs();
+									posmskmsk = (wmsk > 0.).toType(c10::ScalarType::Float) * posmsk + maxmx +
+										(maxmx - (wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * posmsk.abs());
 									//posmsk /= 2.;
 									trainedb = false;
 									btrain = totrainlm.defined();
