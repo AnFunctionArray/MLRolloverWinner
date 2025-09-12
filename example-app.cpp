@@ -1938,7 +1938,7 @@ int main(int, char**) {
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
-									posmsk[0].flatten()[indn] = 0.;
+									posmsk[0].flatten()[indn] -= 1.;
 									//posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
 									//posmskmsk[0].flatten()[indn] = 0.;
@@ -1995,7 +1995,7 @@ int main(int, char**) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
-									posmskmsk = posmsk.clone().detach();// + posmsk.abs().max();
+									posmskmsk = posmsk + posmsk.abs().max();
 									wmsk = wmsk + wmsk.abs().max();
 									//posmsk /= 2.;
 									trainedb = false;
@@ -2015,12 +2015,15 @@ int main(int, char**) {
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									//wmsklst = wmsk.clone().detach();
 									//fwdhlbl2.copy_(fwdhlblout.contiguous());
-									if (vbal2 < lstvbal2, 1) {
+									//fwdhlbl2.copy_(fwdhlblout.contiguous());
+									if (!(vbal2 < lstvbal2)) {
+										posmsk.zero_();
 										//lrdir = 1.;
 										//trainedb = betsitesrmade400g > 1;
-										fwdhlbl2.copy_(fwdhlblout.contiguous());
+										//fwdhlbl2.copy_(fwdhlblout.contiguous());
 									}
 									else {
+										fwdhlbl2.copy_(fwdhlblout.contiguous());
 										//lrdir = -1.;
 									}
 									if (1) {
