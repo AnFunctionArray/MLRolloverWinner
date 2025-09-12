@@ -1930,7 +1930,7 @@ int main(int, char**) {
 									mxpr = 1.;*/
 
 								rfgrid[0].flatten()[indn] = float(predright);
-								wmsk[0].flatten()[indn] += mxpr;//(!fresir);
+								wmsk[0].flatten()[indn] = mxpr;//(!fresir);
 
 								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
