@@ -163,8 +163,9 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, validation_matrix,
-		pos_msk
+		sl_target, {},
+		validation_matrix//,
+		//pos_msk
 	);
 
 	float lambda = 0.5;
@@ -1930,7 +1931,7 @@ int main(int, char**) {
 									mxpr = 1.;*/
 
 								rfgrid[0].flatten()[indn] = float(predright);
-								wmsk[0].flatten()[indn] = mxpr;//(!fresir);
+								wmsk[0].flatten()[indn] += mxpr;//(!fresir);
 
 								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
@@ -1986,11 +1987,18 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-									/*auto minv = posmsk.abs().min();
+
+									auto minv = posmsk.abs().min();
 									if (minv.item().toFloat() > 0.) {
 										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk + minv);
-									}*/
+									}
+
+									minv = wmsk.abs().min();
+									if (minv.item().toFloat() > 0.) {
+										wmsk = ((wmsk > 0.).toType(c10::ScalarType::Float) * wmsk - minv) +
+											((wmsk < 0.).toType(c10::ScalarType::Float) * wmsk + minv);
+									}
 									/*if (reswillwino.defined()) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
@@ -2016,16 +2024,16 @@ int main(int, char**) {
 									//wmsklst = wmsk.clone().detach();
 									//fwdhlbl2.copy_(fwdhlblout.contiguous());
 									//fwdhlbl2.copy_(fwdhlblout.contiguous());
-									if (!(vbal2 < lstvbal2)) {
-										posmsk.zero_();
+									//if (!(vbal2 < lstvbal2)) {
+									//	posmsk.zero_();
 										//lrdir = 1.;
 										//trainedb = betsitesrmade400g > 1;
 										//fwdhlbl2.copy_(fwdhlblout.contiguous());
-									}
-									else {
+									//}
+									//else {
 										fwdhlbl2.copy_(fwdhlblout.contiguous());
 										//lrdir = -1.;
-									}
+									//}
 									if (1) {
 										if (0)
 											tolrnl52m = torch::vstack({ tolrnl52m, tolrnll2 }).cuda();
