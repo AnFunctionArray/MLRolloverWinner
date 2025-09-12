@@ -1921,7 +1921,7 @@ int main(int, char**) {
 
 								}
 								float mxpr = (numres / 9999.);
-								mxpr = std::abs(pred - mxpr);
+								mxpr = (pred - mxpr);
 								/*if (numres <= 2499)
 									mxpr = 0.0;
 								else if (numres <= 7499)
@@ -1995,6 +1995,7 @@ int main(int, char**) {
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
 									posmskmsk = posmsk + posmsk.abs().max();
+									wmsk = wmsk + wmsk.abs().max();
 									//posmsk /= 2.;
 									trainedb = false;
 									btrain = totrainlm.defined();
