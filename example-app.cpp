@@ -1921,7 +1921,7 @@ int main(int, char**) {
 
 								}
 								float mxpr = (numres / 9999.);
-								mxpr = wasab ? (pred - mxpr) : (mxpr - pred);
+								mxpr = std::abs(pred - mxpr);
 								/*if (numres <= 2499)
 									mxpr = 0.0;
 								else if (numres <= 7499)
@@ -2008,7 +2008,7 @@ int main(int, char**) {
 									//}
 									posmskmsk = posmsk + posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
 										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
-									wmsk = wmsk + wmsk.min().abs();
+									wmsk = 1. - wmsk;
 
 									
 									//posmsk /= 2.;
