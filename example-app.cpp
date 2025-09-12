@@ -163,7 +163,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, {}, //validation_matrix,
+		sl_target, validation_matrix,
 		pos_msk
 	);
 
@@ -1791,12 +1791,45 @@ int main(int, char**) {
 								volatile bool wasabgrd = ((abvsgrids)[0].flatten()[indn] > 0.5).item().toBool();//
 								volatile bool wilwin = reswillwino.defined() ? ((reswillwino)[0][indn] > 0.5).item().toBool() : 0;
 
-								volatile bool wasab = wilwin;// ? wasab : !wasab;
+								volatile bool wasab = true;// ? wasab : !wasab;
 								bool actualpred = wasab;
 
 								//float coef = reswillwino.defined() ? (torch::sigmoid(reswillwino)[0][indn]).item().toFloat() : 0.5;
-								int numtrgt = wasab ? 4949 : 4950;//std::max(200, std::min((int)(10000 * coef), 9800));
-								int numtrgtprob = (wasab ? (10000 - numtrgt) : numtrgt);
+								int numtrgt0 = wasab ? 4949 : 4950;//std::max(200, std::min((int)(10000 * coef), 9800));
+								int numtrgt1;
+								int numtrgta;
+
+								numtrgta = (reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0) * 9999;
+								
+
+								numtrgt0 = numtrgta - 2500;
+								numtrgt1 = numtrgta + 2499;
+
+								if (numtrgt0 < 0) {
+									numtrgt0 = std::abs(10000 + numtrgt0);
+									wasab = false;
+								}
+								if (numtrgt1 > 9999) {
+									numtrgt1 = std::abs(10000 - numtrgt1);
+									wasab = false;
+								}
+
+								/*if (((abvsgrids)[0].flatten()[indn] >= 0.25).item().toBool() && ((abvsgrids)[0].flatten()[indn] <= 0.75).item().toBool()) {
+									numtrgt0 = 2500;
+									numtrgt1 = 7499;
+								}
+								else if (((abvsgrids)[0].flatten()[indn] > 0.75).item().toBool()) {
+									numtrgt0 = 7500;
+									numtrgt1 = 9999;
+								}
+								else if (((abvsgrids)[0].flatten()[indn] < 0.25).item().toBool()) {
+									numtrgt0 = 0;
+									numtrgt1 = 2499;
+								}*/
+
+								int numtrgtr = (numtrgt1 + 1) - (numtrgt0);
+								
+								int numtrgtprob = (wasab ? (10000 - numtrgtr) : numtrgtr);
 
 								float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
 								volatile float ch = ((float)numtrgtprob / 10000) * 100.;
@@ -1824,14 +1857,14 @@ int main(int, char**) {
 									betamntfl = DEF_BET_AMNTF;
 								}
 
-								if (REAL_BAL) {
+								if (REAL_BAL, 0) {
 									fresir = dobet(wasab, betamntfl, ch, numres);
 									resir = !((numres > 4999) == !!actualpred);
 								}
 								else {
 									numres = getRoll(serverSeedl, clientSeedl, noncel);
 									resir = !((numres > 4999) == !!actualpred);
-									fresir = wasab ? !((numres > numtrgt)) : !((numres < numtrgt));
+									fresir = wasab ? !((numres >= numtrgt0) && (numres <= numtrgt1)) : !(((numres < numtrgt0) && (numres > numtrgt1)));
 								}
 
 								bool predright = !resir ? actualpred : !actualpred;
@@ -1885,16 +1918,24 @@ int main(int, char**) {
 								for (int y = 0; y < 1; ++y) {
 
 								}
+								float mxpr = (numres / 9999.);
+								/*if (numres <= 2499)
+									mxpr = 0.0;
+								else if (numres <= 7499)
+									mxpr = 0.75;
+								else if (numres <= 9999)
+									mxpr = 1.;*/
+
 								rfgrid[0].flatten()[indn] = float(predright);
-								wmsk[0].flatten()[indn] = avret;//(!fresir);
+								wmsk[0].flatten()[indn] = mxpr;//(!fresir);
 
 								if (!fresir) {
-									posmsk[0].flatten()[indn] += 1.;
+									posmsk[0].flatten()[indn] += avret;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
-									posmsk[0].flatten()[indn] -= 1.;
+									posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
 									//posmskmsk[0].flatten()[indn] = 0.;
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten().max() + posmsk[0].flatten()[indn];
@@ -1950,7 +1991,7 @@ int main(int, char**) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
-									posmskmsk = posmsk + posmsk.abs().max();
+									posmskmsk = posmsk + posmsk.max();
 									//posmsk /= 2.;
 									trainedb = false;
 									btrain = totrainlm.defined();
@@ -2478,12 +2519,12 @@ int main(int, char**) {
 							ss << "loss " << loss2 << std::endl;
 							ss << "itesrtrain " << itesrtrain << std::endl;
 							if (dobetr) {
-								ss << "totrainl " << itesrt << std::endl;
+								ss << "totrainl " << rfgridlst << std::endl;
 								//ss << "rfgrid " << rfgrid << std::endl;
 								//ss << "rfgrdif " << (totrainllst - rfgrid).abs() << std::endl;
 								ss << "tolrnll2 " << tolrnl52m << std::endl;
 								ss << "abvsgrids " << abvsgrids << std::endl;
-								ss << "rfmsk " << rfmsk << std::endl;
+								ss << "rfmsk " << wmsk << std::endl;
 								ss << "posmsk " << posmskmsk << std::endl;
 								//ss << "abvsgridsvals " << abvsgridsvals << std::endl;
 								if (reswillwino.defined()) {
