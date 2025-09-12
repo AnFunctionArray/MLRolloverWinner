@@ -1918,7 +1918,8 @@ int main(int, char**) {
 										if ((itesrt[0][indn1][(y + indn0) % 20] > 1.).item().toFloat()) {
 											//if (!zeroed) {
 												inc = itesrt[0][indn1][(y + indn0) % 20].item().toFloat() - 1.;
-												itesrt[0][indn1][(y + indn0) % 20] = 0.; 
+												itesrt[0][indn1][(y + indn0) % 20] = inc; 
+												inc = 0.1;
 											//}
 											///else
 											//	itesrt[0][indn1][(y + indn0) % 20] -= inc;
