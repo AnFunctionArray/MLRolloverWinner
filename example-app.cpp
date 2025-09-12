@@ -1799,6 +1799,8 @@ int main(int, char**) {
 								int numtrgt1;
 								int numtrgta;
 
+								float pred = (reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0);
+
 								numtrgta = (reswillwino.defined() ? ((reswillwino)[0][indn]).item().toFloat() : 0) * 9999;
 								
 
@@ -1919,6 +1921,7 @@ int main(int, char**) {
 
 								}
 								float mxpr = (numres / 9999.);
+								mxpr = std::abs(pred - mxpr);
 								/*if (numres <= 2499)
 									mxpr = 0.0;
 								else if (numres <= 7499)
@@ -1991,7 +1994,7 @@ int main(int, char**) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
-									posmskmsk = posmsk + posmsk.max();
+									posmskmsk = posmsk + posmsk.abs().max();
 									//posmsk /= 2.;
 									trainedb = false;
 									btrain = totrainlm.defined();
