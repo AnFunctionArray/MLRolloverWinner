@@ -2006,9 +2006,9 @@ int main(int, char**) {
 									//	posmsk = (posmsk != posmsk.max()).toType(c10::ScalarType::Float) *
 									//		(posmsk != posmsk.min()).toType(c10::ScalarType::Float) * posmsk;
 									//}
-									posmskmsk = posmsk + posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
+									posmskmsk = posmsk + posmsk.min().abs() * 2;//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
 										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
-									wmsk = wmsk + wmsk.min().abs();
+									wmsk = wmsk + wmsk.min().abs() * 2;
 
 									
 									//posmsk /= 2.;
