@@ -1950,7 +1950,7 @@ int main(int, char**) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
-									posmskmsk = posmsk + posmsk.max();
+									posmskmsk = posmsk + posmsk.abs().max();
 									//posmsk /= 2.;
 									trainedb = false;
 									btrain = totrainlm.defined();
@@ -1969,7 +1969,7 @@ int main(int, char**) {
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									//wmsklst = wmsk.clone().detach();
 									//fwdhlbl2.copy_(fwdhlblout.contiguous());
-									if (vbal2 < lstvbal2) {
+									if (vbal2 < lstvbal2, 1) {
 										//lrdir = 1.;
 										//trainedb = betsitesrmade400g > 1;
 										fwdhlbl2.copy_(fwdhlblout.contiguous());
