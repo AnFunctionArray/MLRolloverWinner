@@ -1829,12 +1829,12 @@ int main(int, char**) {
 									numtrgt1 = 2499;
 								}*/
 
-								int numtrgtr = (numtrgt1 + 1) - (numtrgt0);
+								int numtrgtr = (std::min(numtrgt1, numtrgt0)) - (std::max(numtrgt1, numtrgt0));
 								
-								int numtrgtprob = (wasab ? (10000 - numtrgtr) : numtrgtr);
+								int numtrgtprob = (!wasab ? (9999 - numtrgtr) : numtrgtr);
 
-								float mul = ((float)10000 / numtrgtprob) * (99. / 100.);
-								volatile float ch = ((float)numtrgtprob / 10000) * 100.;
+								float mul = ((float)9999 / numtrgtprob) * (99. / 100.);
+								volatile float ch = ((float)numtrgtprob / 9999) * 100.;
 								trainedb = !wasab;//reswillwino.defined() ? ((reswillwino)[0][indn].abs() > 0.3).item().toBool() : 0;//!wasab;
 
 								prabs[modes] = (float)actualpred;
@@ -1933,12 +1933,13 @@ int main(int, char**) {
 								wmsk[0].flatten()[indn] = mxpr;//(!fresir);
 
 								if (!fresir) {
-									posmsk[0].flatten()[indn] += avret;
+									posmsk[0].flatten()[indn] += 1.;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
-									posmsk[0].flatten()[indn] -= avret;
+									posmsk[0].flatten()[indn] = 0.;
+									//posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
 									//posmskmsk[0].flatten()[indn] = 0.;
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten().max() + posmsk[0].flatten()[indn];
@@ -1994,7 +1995,7 @@ int main(int, char**) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
-									posmskmsk = posmsk + posmsk.abs().max();
+									posmskmsk = posmsk.clone().detach();// + posmsk.abs().max();
 									wmsk = wmsk + wmsk.abs().max();
 									//posmsk /= 2.;
 									trainedb = false;
