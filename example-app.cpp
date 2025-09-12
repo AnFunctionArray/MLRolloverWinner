@@ -1836,9 +1836,9 @@ int main(int, char**) {
 
 								bool predright = !resir ? actualpred : !actualpred;
 
-								fresir = !(predright == wasabgrd);
-								if (!wilwin)
-									fresir = !fresir;
+								//fresir = !(predright == wasabgrd);
+								//if (!wilwin)
+								//	fresir = !fresir;
 
 
 								if (!fresir && reswillwino.defined()) {
@@ -1888,7 +1888,7 @@ int main(int, char**) {
 								rfgrid[0].flatten()[indn] = float(predright);
 								wmsk[0].flatten()[indn] = (!fresir);
 
-								if (!fresir, predright == wasabgrd) {
+								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
@@ -1907,27 +1907,30 @@ int main(int, char**) {
 									posmsk[0].flatten()[indn] = -10. + -(10. - posmsk[0].flatten()[indn].item().toFloat());
 								}*/
 
-								/*if (predright) {
+								if (predright, indn % 20 == 0) {
 									auto indn1 = indn / 20;
 									auto indn0 = indn % 20;
 									bool zeroed = false;
 									int y = 0;
+									float inc = indn1 * 0.1;
 									do {
-										itesrt[0][indn1][(y + indn0) % 20] += 0.1;
+										itesrt[0][indn1][(y + indn0) % 20] += inc;
 										if ((itesrt[0][indn1][(y + indn0) % 20] > 1.).item().toFloat()) {
-											if (!zeroed)
-												itesrt[0][indn1][(y + indn0) % 20] = 0.;
-											else
-												itesrt[0][indn1][(y + indn0) % 20] -= 0.1;
-											zeroed = true;
+											//if (!zeroed) {
+												inc = itesrt[0][indn1][(y + indn0) % 20].item().toFloat() - 1.;
+												itesrt[0][indn1][(y + indn0) % 20] = 0.; 
+											//}
+											///else
+											//	itesrt[0][indn1][(y + indn0) % 20] -= inc;
+											//zeroed = true;
 										}
 										else {
 											break;
 										}
 										//if (zeroed)
 										//	itesrt[0][indn1][y] -= 0.1;
-									} while (y++ < 20);
-								}*/
+									} while (y++, 1);
+								}
 
 								totrainl = torch::roll(totrainl, 1);
 
@@ -2329,7 +2332,7 @@ int main(int, char**) {
 									runlr2 = runlrb2;
 									runlr3 = runlrb3;//0.00000166666 * loss2.item().toFloat();
 									runlradv = 100.;
-									rfgridlst = reswillwino.defined() ? (reswillwino1).clone().detach().reshape_as(rfgridlst).toType(c10::ScalarType::Float) : rfgridlst;//tolrnll2.clone().detach();//abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(tolrnll2.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
+									rfgridlst = itesrt.clone().detach();//reswillwino.defined() ? (reswillwino1).clone().detach().reshape_as(rfgridlst).toType(c10::ScalarType::Float) : rfgridlst;//tolrnll2.clone().detach();//abvsgrids.toType(c10::ScalarType::Bool).bitwise_and(tolrnll2.clone().detach().toType(c10::ScalarType::Bool)).toType(c10::ScalarType::Float);//rfgrid.clone().detach();
 
 									totrainllst = test2->mem.detach().clone();
 
@@ -2474,7 +2477,7 @@ int main(int, char**) {
 							ss << "loss " << loss2 << std::endl;
 							ss << "itesrtrain " << itesrtrain << std::endl;
 							if (dobetr) {
-								ss << "totrainl " << totrainlm << std::endl;
+								ss << "totrainl " << itesrt << std::endl;
 								//ss << "rfgrid " << rfgrid << std::endl;
 								//ss << "rfgrdif " << (totrainllst - rfgrid).abs() << std::endl;
 								ss << "tolrnll2 " << tolrnl52m << std::endl;
