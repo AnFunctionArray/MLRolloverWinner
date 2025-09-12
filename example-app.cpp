@@ -1986,13 +1986,13 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-									auto minv = posmsk.min();
+									auto minv = ((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk).min();
 									if (minv.item().toFloat() > 0.) {
 										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk) +
 											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk - minv);
 									}
 
-									minv = posmsk.max();
+									minv = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk).min();
 									if (minv.item().toFloat() > 0.) {
 										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
