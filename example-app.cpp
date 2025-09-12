@@ -163,9 +163,8 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, {},
-		validation_matrix//,
-		//pos_msk
+		sl_target, validation_matrix,
+		pos_msk
 	);
 
 	float lambda = 0.5;
@@ -1987,24 +1986,24 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-
-									auto minv = posmsk.abs().min();
+									/*auto minv = posmsk.abs().min();
 									if (minv.item().toFloat() > 0.) {
 										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk + minv);
-									}
-
-									minv = wmsk.abs().min();
-									if (minv.item().toFloat() > 0.) {
-										wmsk = ((wmsk > 0.).toType(c10::ScalarType::Float) * wmsk - minv) +
-											((wmsk < 0.).toType(c10::ScalarType::Float) * wmsk + minv);
-									}
+									}*/
+									
 									/*if (reswillwino.defined()) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
+									if ((posmsk.max() > posmsk.min().abs()).item().toBool()) {
+										posmsk = (posmsk != posmsk.max()).toType(c10::ScalarType::Float) *
+											(posmsk != posmsk.min()).toType(c10::ScalarType::Float) * posmsk;
+									}
 									posmskmsk = posmsk + posmsk.abs().max();
 									wmsk = wmsk + wmsk.abs().max();
+
+									
 									//posmsk /= 2.;
 									trainedb = false;
 									btrain = totrainlm.defined();
