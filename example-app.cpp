@@ -122,9 +122,9 @@ static float avm;
 static float avm2;
 static int betindex = 0;
 static bool betindexdir = 0;
-static torch::Tensor fwdhlbl = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda().requires_grad_(false), fwdhlb2 = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda(), resall2o, resallo, reswillwino, reswillwino1, reswillwino1lst, reswillwinotr,
-fwdhlblout = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda(), fwdhlbl2 = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda(), fwdhlbl2o = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda(),
-fwdhlbl2w = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda(), fwdhlbl2l = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda(), fwdhlbloutst = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
+static torch::Tensor fwdhlbl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda().requires_grad_(false), fwdhlb2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), resall2o, resallo, reswillwino, reswillwino1, reswillwino1lst, reswillwinotr,
+fwdhlblout = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2o = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(),
+fwdhlbl2w = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2l = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbloutst = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
 static torch::Tensor reslst = torch::zeros({ 20,20 }).cuda();
 static bool dirw = false;
 static bool contiw = false;
@@ -163,7 +163,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, {},//, validation_matrix
+		sl_target, validation_matrix,
 		pos_msk
 	);
 
@@ -696,7 +696,7 @@ struct Net2Impl : NetImpl {
 		int y = 0;
 
 		//auto in = layers[i].embds->forward(inputl.unsqueeze(1), torch::tensor({ (int64_t)rotarypos })).squeeze(1);
-		auto rnnres = layers[i].rnn1(inputl.swapaxes(0, 1), std::tuple{hlin[i][0].toType(c10::ScalarType::Half), hlin[i][1].toType(c10::ScalarType::Half)});
+		auto rnnres = layers[i].rnn1(inputl, std::tuple{hlin[i][0].toType(c10::ScalarType::Half), hlin[i][1].toType(c10::ScalarType::Half)});
 
 		auto rnno = (std::get<0>(rnnres));//std::get<0>(rnnres).chunk(2, -1)[0];//,
 
@@ -710,7 +710,7 @@ struct Net2Impl : NetImpl {
 
 
 		y = 0;
-		inputl = rnno.swapaxes(0, 1);
+		inputl = rnno;
 		for (ii = 0; ii < 10; ++ii) {
 
 			inputl = (layers[i].cnvs1d[y * 8 + ii].cnv(inputl));
@@ -1431,7 +1431,7 @@ int main(int, char**) {
 
 
 
-		torch::Tensor fwdhlb = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
+		torch::Tensor fwdhlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
 
 
 
@@ -1600,20 +1600,20 @@ int main(int, char**) {
 		uint64_t ntrain = 0;
 		static int iters = 0;
 		static std::atomic_bool lost_mode = false;
-		static torch::Tensor trainhl = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		static torch::Tensor trainhln = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		static torch::Tensor trainhl2 = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		torch::Tensor ntrainhl = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		torch::Tensor fwdhl = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		torch::Tensor fwdhlrn = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		torch::Tensor lstgood = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		torch::Tensor hl = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		torch::Tensor hlb = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		torch::Tensor hlrn = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
-		const torch::Tensor hlzero = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
+		static torch::Tensor trainhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		static torch::Tensor trainhln = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		static torch::Tensor trainhl2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor ntrainhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor fwdhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor fwdhlrn = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor lstgood = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor hl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor hlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor hlrn = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		const torch::Tensor hlzero = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
 
 		lstrnntrainh = torch::zeros({ 2, 2 * 6, 20, 20 }).cuda();
-		torch::Tensor trainhlb = torch::zeros({ 5, 2, 2 * 6, 1, 20 }).cuda();
+		torch::Tensor trainhlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
 
 		savestuff = [&](bool sv, const torch::nn::Module& net, const char* name) {//itersx > 4) {
 
@@ -1886,7 +1886,7 @@ int main(int, char**) {
 
 								}
 								rfgrid[0].flatten()[indn] = float(predright);
-								wmsk[0].flatten()[indn] = (!fresir);
+								wmsk[0].flatten()[indn] = avret;//(!fresir);
 
 								if (!fresir) {
 									posmsk[0].flatten()[indn] += 1.;
@@ -1968,15 +1968,15 @@ int main(int, char**) {
 									//rfmsk = (tmp > 0.)//abvsgrids.toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float) * ;// + abvsgrids.toType(c10::ScalarType::Bool).toType(c10::ScalarType::Float)//(wmsk - (wmsklst)).abs();//( (rfgrid * wmsk) / ((rfgrid - 1.).abs() * wmsklst + 1e-6)).sigmoid();
 									//posmsk = ((rfgrid) / ((rfgrid - 1.).abs() + 1e-6)).sigmoid();//torch::tensor(1.);//torch::tensor(lstvbal2 - vbal2).maximum(torch::tensor(1.));
 									//wmsklst = wmsk.clone().detach();
-									fwdhlbl2.copy_(fwdhlblout.contiguous());
-									/*if (vbal2 < lstvbal2) {
-										lrdir = 1.;
+									//fwdhlbl2.copy_(fwdhlblout.contiguous());
+									if (vbal2 < lstvbal2) {
+										//lrdir = 1.;
 										//trainedb = betsitesrmade400g > 1;
-										
+										fwdhlbl2.copy_(fwdhlblout.contiguous());
 									}
 									else {
-										lrdir = -1.;
-									}*/
+										//lrdir = -1.;
+									}
 									if (1) {
 										if (0)
 											tolrnl52m = torch::vstack({ tolrnl52m, tolrnll2 }).cuda();
@@ -2024,7 +2024,7 @@ int main(int, char**) {
 									}
 
 									loss2 =
-										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), rfmsk, posmskmsk);//.mean(1).flatten());
+										hybrid_loss(reswillwinotr, tolrnl52m.detach().toType(c10::ScalarType::Half), wmsk, posmskmsk);//.mean(1).flatten());
 
 
 									float loss = loss2.item().toFloat();
