@@ -1986,11 +1986,11 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-									auto minv = posmsk.abs().min();
+									/*auto minv = posmsk.abs().min();
 									if (minv.item().toFloat() > 0.) {
 										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk + minv);
-									}
+									}*/
 									/*if (reswillwino.defined()) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
