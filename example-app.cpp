@@ -1986,10 +1986,16 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-									auto minv = posmsk.abs().min();
+									auto minv = posmsk.min();
+									if (minv.item().toFloat() > 0.) {
+										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk) +
+											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk - minv);
+									}
+
+									minv = posmsk.max();
 									if (minv.item().toFloat() > 0.) {
 										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
-											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk + minv);
+											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
 									}
 									
 									/*if (reswillwino.defined()) {
@@ -2000,9 +2006,9 @@ int main(int, char**) {
 									//	posmsk = (posmsk != posmsk.max()).toType(c10::ScalarType::Float) *
 									//		(posmsk != posmsk.min()).toType(c10::ScalarType::Float) * posmsk;
 									//}
-									posmskmsk = (posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
-										(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
-									wmsk = wmsk + wmsk.abs().max();
+									posmskmsk = posmsk + posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
+										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
+									wmsk = wmsk + wmsk.min().abs();
 
 									
 									//posmsk /= 2.;
