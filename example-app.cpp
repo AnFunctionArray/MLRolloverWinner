@@ -1829,7 +1829,7 @@ int main(int, char**) {
 									numtrgt1 = 2499;
 								}*/
 
-								int numtrgtr = (std::min(numtrgt1, numtrgt0)) - (std::max(numtrgt1, numtrgt0));
+								int numtrgtr = (std::max(numtrgt1, numtrgt0)) - (std::min(numtrgt1, numtrgt0));
 								
 								int numtrgtprob = (!wasab ? (9999 - numtrgtr) : numtrgtr);
 
