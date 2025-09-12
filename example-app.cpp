@@ -163,7 +163,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, validation_matrix,
+		sl_target, {}, //validation_matrix,
 		pos_msk
 	);
 
