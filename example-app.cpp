@@ -2008,7 +2008,7 @@ int main(int, char**) {
 									//}
 									posmskmsk = posmsk + posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
 										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
-									wmsk = 1. - wmsk;
+									wmsk = wmsk;
 
 									
 									//posmsk /= 2.;
