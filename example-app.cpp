@@ -121,9 +121,9 @@ static float avm;
 static float avm2;
 static int betindex = 0;
 static bool betindexdir = 0;
-static torch::Tensor fwdhlbl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda().requires_grad_(false), fwdhlb2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), resall2o, resallo, reswillwino, reswillwino1, reswillwino1lst, reswillwinotr,
-fwdhlblout = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2o = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(),
-fwdhlbl2w = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbl2l = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda(), fwdhlbloutst = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+static torch::Tensor fwdhlbl = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda().requires_grad_(false), fwdhlb2 = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda(), resall2o, resallo, reswillwino, reswillwino1, reswillwino1lst, reswillwinotr,
+fwdhlblout = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda(), fwdhlbl2 = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda(), fwdhlbl2o = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda(),
+fwdhlbl2w = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda(), fwdhlbl2l = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda(), fwdhlbloutst = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
 static torch::Tensor reslst = torch::zeros({ 20,20 }).cuda();
 static bool dirw = false;
 static bool contiw = false;
@@ -624,7 +624,7 @@ struct Net2Impl : NetImpl {
 
 		std::vector<torch::Tensor> cnvpars;
 		for (int i = 0; i < 1; ++i) {
-			layers[i].rnn1 = torch::nn::LSTM(torch::nn::LSTMOptions(20, 20).num_layers(6).bidirectional(true));
+			layers[i].rnn1 = torch::nn::LSTM(torch::nn::LSTMOptions(10, 10).num_layers(6).bidirectional(true));
 			//layers[i].embds = RotaryPositionalEmbeddings(20);
 			if (0) {
 
@@ -639,7 +639,7 @@ struct Net2Impl : NetImpl {
 					int tchnls = 4;
 
 					di = 0;
-					for (int ii = 0; ii < 10; ++ii) {
+					for (int ii = 0; ii < 5; ++ii) {
 						layers[i].cnvs1d[y * 8 + ii].cnv = torch::nn::Conv1d{ torch::nn::Conv1dOptions(20, 20, 3).dilation(1 << di).padding((1 << di) - 1) }; // .dilation(1 << di).padding((1 << di) - 1)
 						register_module("cnvs1d" + std::to_string(i) + std::to_string(y * 8 + ii), layers[i].cnvs1d[y * 8 + ii].cnv);
 
@@ -695,7 +695,18 @@ struct Net2Impl : NetImpl {
 		int y = 0;
 
 		auto in = layers[i].trans4->encoder.forward(inputl);//layers[i].embds->forward(inputl.unsqueeze(1), torch::tensor({ (int64_t)rotarypos })).squeeze(1);
-		auto rnnres = layers[i].rnn1(in, std::tuple{hlin[i][0].toType(c10::ScalarType::Half), hlin[i][1].toType(c10::ScalarType::Half)});
+		
+		y = 0;
+		inputl = in;
+		for (ii = 0; ii < 5; ++ii) {
+
+			inputl = (layers[i].cnvs1d[y * 8 + ii].cnv(inputl));
+
+			inputl = torch::relu(inputl);
+
+		}
+		
+		auto rnnres = layers[i].rnn1(inputl, std::tuple{hlin[i][0].toType(c10::ScalarType::Half), hlin[i][1].toType(c10::ScalarType::Half)});
 
 		auto rnno = (std::get<0>(rnnres));//std::get<0>(rnnres).chunk(2, -1)[0];//,
 
@@ -707,16 +718,7 @@ struct Net2Impl : NetImpl {
 			(*hlout)[i][1].copy_((hl1).detach().clone());//.detach().clone().cuda().contiguous();
 		}
 
-
-		y = 0;
 		inputl = rnno;
-		for (ii = 0; ii < 10; ++ii) {
-
-			inputl = (layers[i].cnvs1d[y * 8 + ii].cnv(inputl));
-
-			inputl = torch::relu(inputl);
-
-		}
 
 
 		for (int i = 0; i < 1; ++i) {
@@ -1430,7 +1432,7 @@ int main(int, char**) {
 
 
 
-		torch::Tensor fwdhlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor fwdhlb = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
 
 
 
@@ -1599,20 +1601,20 @@ int main(int, char**) {
 		uint64_t ntrain = 0;
 		static int iters = 0;
 		static std::atomic_bool lost_mode = false;
-		static torch::Tensor trainhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		static torch::Tensor trainhln = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		static torch::Tensor trainhl2 = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		torch::Tensor ntrainhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		torch::Tensor fwdhl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		torch::Tensor fwdhlrn = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		torch::Tensor lstgood = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		torch::Tensor hl = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		torch::Tensor hlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		torch::Tensor hlrn = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
-		const torch::Tensor hlzero = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		static torch::Tensor trainhl = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		static torch::Tensor trainhln = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		static torch::Tensor trainhl2 = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		torch::Tensor ntrainhl = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		torch::Tensor fwdhl = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		torch::Tensor fwdhlrn = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		torch::Tensor lstgood = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		torch::Tensor hl = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		torch::Tensor hlb = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		torch::Tensor hlrn = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
+		const torch::Tensor hlzero = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
 
 		lstrnntrainh = torch::zeros({ 2, 2 * 6, 20, 20 }).cuda();
-		torch::Tensor trainhlb = torch::zeros({ 5, 2, 2 * 6, 20, 20 }).cuda();
+		torch::Tensor trainhlb = torch::zeros({ 5, 2, 2 * 6, 20, 10 }).cuda();
 
 		savestuff = [&](bool sv, const torch::nn::Module& net, const char* name) {//itersx > 4) {
 
