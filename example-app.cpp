@@ -2003,10 +2003,7 @@ int main(int, char**) {
 									if (flippedposmsk)
 										posmsk = -posmsk;
 									flippedposmsk = false;
-									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool()) {
-										posmsk = -posmsk;
-										flippedposmsk = true;
-									}
+									
 									/*if (reswillwino.defined()) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
@@ -2018,6 +2015,11 @@ int main(int, char**) {
 									posmskmsk = posmsk + posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
 										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
 									wmsk = wmsk;
+
+									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool()) {
+										posmsk = -posmsk;
+										flippedposmsk = true;
+									}
 
 									
 									//posmsk /= 2.;
