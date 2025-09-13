@@ -1999,17 +1999,15 @@ int main(int, char**) {
 									//	posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 									//		((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
 									//}
-									
+									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool())
+										posmsk = -posmsk;
 									/*if (reswillwino.defined()) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
 									//if ((posmsk.max() > posmsk.min().abs()).item().toBool()) {
-									posmsk = (posmsk != posmsk.max()).toType(c10::ScalarType::Float) * posmsk +
-										(posmsk != posmsk.min()).toType(c10::ScalarType::Float) * posmsk +
-										(posmsk == posmsk.max()).toType(c10::ScalarType::Float) * -posmsk +
-										(posmsk == posmsk.min()).toType(c10::ScalarType::Float) * -posmsk;
-
+									//	posmsk = (posmsk != posmsk.max()).toType(c10::ScalarType::Float) *
+									//		(posmsk != posmsk.min()).toType(c10::ScalarType::Float) * posmsk;
 									//}
 									posmskmsk = posmsk + posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
 										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
