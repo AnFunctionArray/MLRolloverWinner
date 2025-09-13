@@ -2024,7 +2024,7 @@ int main(int, char**) {
 									//	flippedposmsk = true;
 									//}
 										if (loss2.defined())
-										posmsk /= loss2.clone().detach();
+										posmsk /= lssdifg + 1e-6;
 
 									
 									//posmsk /= 2.;
