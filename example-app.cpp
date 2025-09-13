@@ -1933,12 +1933,13 @@ int main(int, char**) {
 								rfmsk[0].flatten()[indn] = (fresir);
 
 								if (!fresir) {
+									posmsk[0].flatten()[indn] = posmsk[0].flatten()[indn].abs();
 									posmsk[0].flatten()[indn] += 1.;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
-									posmsk[0].flatten()[indn] = -posmsk[0].flatten()[indn];
+									posmsk[0].flatten()[indn] = -posmsk[0].flatten()[indn].abs();
 									posmsk[0].flatten()[indn] -= 1.;
 									//posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
