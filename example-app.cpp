@@ -1933,13 +1933,13 @@ int main(int, char**) {
 								rfmsk[0].flatten()[indn] = (fresir);
 
 								if (!fresir) {
-									posmsk[0].flatten()[indn] = posmsk[0].flatten()[indn].abs();
+									//posmsk[0].flatten()[indn] = posmsk[0].flatten()[indn].abs();
 									posmsk[0].flatten()[indn] += 1.;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
-									posmsk[0].flatten()[indn] = -posmsk[0].flatten()[indn].abs();
+									//posmsk[0].flatten()[indn] = -posmsk[0].flatten()[indn].abs();
 									posmsk[0].flatten()[indn] -= 1.;
 									//posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
@@ -1988,16 +1988,16 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-									auto minv = ((posmsk <= 0.).toType(c10::ScalarType::Float) * posmsk).min();
+									//auto minv = ((posmsk <= 0.).toType(c10::ScalarType::Float) * posmsk).min();
 									//if (minv.item().toFloat() > 0.) {
-										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk) +
-											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk - minv);
+									//	posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk) +
+									//		((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk - minv);
 									//}
 
-									minv = ((posmsk >= 0.).toType(c10::ScalarType::Float) * posmsk).min();
+									//minv = ((posmsk >= 0.).toType(c10::ScalarType::Float) * posmsk).min();
 									//if (minv.item().toFloat() > 0.) {
-										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
-											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
+									//	posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
+									//		((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
 									//}
 									
 									/*if (reswillwino.defined()) {
@@ -2005,8 +2005,11 @@ int main(int, char**) {
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
 									}*/
 									//if ((posmsk.max() > posmsk.min().abs()).item().toBool()) {
-									//	posmsk = (posmsk != posmsk.max()).toType(c10::ScalarType::Float) *
-									//		(posmsk != posmsk.min()).toType(c10::ScalarType::Float) * posmsk;
+									posmsk = (posmsk != posmsk.max()).toType(c10::ScalarType::Float) * posmsk +
+										(posmsk != posmsk.min()).toType(c10::ScalarType::Float) * posmsk +
+										(posmsk == posmsk.max()).toType(c10::ScalarType::Float) * -posmsk +
+										(posmsk == posmsk.min()).toType(c10::ScalarType::Float) * -posmsk;
+
 									//}
 									posmskmsk = posmsk + posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
 										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
