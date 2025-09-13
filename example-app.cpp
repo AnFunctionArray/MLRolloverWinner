@@ -1999,7 +1999,7 @@ int main(int, char**) {
 									//	posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 									//		((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
 									//}
-									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool())
+									if (vbal2 < lstvbal2)//(posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool())
 										posmsk = -posmsk;
 									/*if (reswillwino.defined()) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
