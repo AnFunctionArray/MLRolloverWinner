@@ -1654,7 +1654,7 @@ int main(int, char**) {
 
 
 			auto dobetl2 = [&]() {
-				static torch::Tensor loss2 = torch::empty({});
+				static torch::Tensor loss2;
 				static int itesrtrain = 0, itesrtraing = 0;
 				static float lss2min;
 				auto wcopy = [](torch::Tensor& w, const torch::Tensor& w1, double decay) {
@@ -2018,11 +2018,13 @@ int main(int, char**) {
 										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
 									wmsk = wmsk;
 
-									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool()) {
+									//if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool()) {
 										posmsk = -posmsk;
-										posmsk = torch::flip(posmsk.flatten(), 0).reshape_as(posmsk);
-										flippedposmsk = true;
-									}
+									//	posmsk = torch::flip(posmsk.flatten(), 0).reshape_as(posmsk);
+									//	flippedposmsk = true;
+									//}
+										if (loss2.defined())
+										posmsk /= loss2.clone().detach();
 
 									
 									//posmsk /= 2.;
@@ -2234,16 +2236,7 @@ int main(int, char**) {
 											runlr = 0.01;// 1e-6;
 											runlr2 = 1.;
 										}
-										if (lssdif == 0., stalled) {
-
-											losslstgr = loss2.item().toFloat();
-
-
-
-										}
-										else {
-
-										}
+										
 
 										if (summarycu.num_iteration > 0 && stalled) {
 
@@ -2537,13 +2530,13 @@ int main(int, char**) {
 									itesrwin = 0;
 									acccoef = 0.;
 
-									if (loss2.item().toFloat() < 0.1, 0) {
+									/*if (loss2.item().toFloat() < 0.1, 0) {
 										fwdhlbl2.copy_(fwdhlblout.contiguous().detach());
 										tolrnl52m.~decltype(tolrnl52m)();
 										totrainlm.~decltype(totrainlm)();
 										new(&tolrnl52m)decltype(tolrnl52m)();
 										new(&totrainlm)decltype(totrainlm)();
-									}
+									}*/
 									//fwdhlbl.copy_(fwdhlblout.contiguous().detach());
 								}
 
