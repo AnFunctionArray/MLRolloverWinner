@@ -1920,7 +1920,7 @@ int main(int, char**) {
 
 								}
 								float mxpr = (numres / 9999.);
-								mxpr = std::abs(pred - mxpr);
+								//mxpr = std::abs(pred - mxpr);
 								/*if (numres <= 2499)
 									mxpr = 0.0;
 								else if (numres <= 7499)
@@ -1928,8 +1928,8 @@ int main(int, char**) {
 								else if (numres <= 9999)
 									mxpr = 1.;*/
 
-								rfgrid[0].flatten()[indn] = float(predright);
-								wmsk[0].flatten()[indn] = mxpr;//(!fresir);
+								rfgrid[0].flatten()[indn] = float(mxpr);
+								wmsk[0].flatten()[indn] = std::abs(pred - mxpr);//(!fresir);
 								rfmsk[0].flatten()[indn] = (fresir);
 
 								if (!fresir) {
@@ -2030,7 +2030,7 @@ int main(int, char**) {
 									//auto tmp = ((wmsk / (wmsklst)).sigmoid() > 0.).toType(c10::ScalarType::Bool);
 									//auto otherflp = (tmp.logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
-									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
+									tolrnll2 = rfgrid.clone().detach();//reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
 									//tolrnll2 = ((rfmsk == 0.).toType(c10::ScalarType::Float) * tolrnll2 + (rfmsk > 0.).toType(c10::ScalarType::Float) * (tolrnll2 - 1.).abs());
 									//posmskmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk + (posmsk > 0.).toType(c10::ScalarType::Float) * ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk).max() +
 									//	((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk).min().abs() + ((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk)).clone().detach();
