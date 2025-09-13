@@ -2020,7 +2020,7 @@ int main(int, char**) {
 									//auto otherflp = (tmp.logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
 									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
-									tolrnll2 = ((rfmsk > 0.).toType(c10::ScalarType::Float) * tolrnll2 + (rfmsk == 0.).toType(c10::ScalarType::Float) * (tolrnll2 - 1.).abs());
+									tolrnll2 = ((rfmsk == 0.).toType(c10::ScalarType::Float) * tolrnll2 + (rfmsk > 0.).toType(c10::ScalarType::Float) * (tolrnll2 - 1.).abs());
 									//posmskmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk + (posmsk > 0.).toType(c10::ScalarType::Float) * ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk).max() +
 									//	((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk).min().abs() + ((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk)).clone().detach();
 									//posmskmsk = posmsk.clone().detach();//.clip(0.);
