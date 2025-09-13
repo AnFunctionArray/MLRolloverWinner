@@ -694,8 +694,8 @@ struct Net2Impl : NetImpl {
 		int ii = 0;
 		int y = 0;
 
-		//auto in = layers[i].embds->forward(inputl.unsqueeze(1), torch::tensor({ (int64_t)rotarypos })).squeeze(1);
-		auto rnnres = layers[i].rnn1(inputl, std::tuple{hlin[i][0].toType(c10::ScalarType::Half), hlin[i][1].toType(c10::ScalarType::Half)});
+		auto in = layers[i].trans4->encoder.forward(inputl);//layers[i].embds->forward(inputl.unsqueeze(1), torch::tensor({ (int64_t)rotarypos })).squeeze(1);
+		auto rnnres = layers[i].rnn1(in, std::tuple{hlin[i][0].toType(c10::ScalarType::Half), hlin[i][1].toType(c10::ScalarType::Half)});
 
 		auto rnno = (std::get<0>(rnnres));//std::get<0>(rnnres).chunk(2, -1)[0];//,
 
@@ -724,7 +724,7 @@ struct Net2Impl : NetImpl {
 
 		}
 
-		inputl = layers[i].trans4(inputl, inputl);
+		inputl = layers[i].trans4->decoder.forward(inputl, in);//layers[i].trans4(inputl, inputl);
 
 		todrawres = inputl;
 
