@@ -1934,13 +1934,13 @@ int main(int, char**) {
 
 								if (!fresir) {
 									//posmsk[0].flatten()[indn] = posmsk[0].flatten()[indn].abs();
-									posmsk[0].flatten()[indn] += 1.;
+									posmsk[0].flatten()[indn] += vbal2;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
 									//posmsk[0].flatten()[indn] = -posmsk[0].flatten()[indn].abs();
-									posmsk[0].flatten()[indn] -= 1.;
+									posmsk[0].flatten()[indn] -= vbal2;
 									//posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
 									//posmskmsk[0].flatten()[indn] = 0.;
@@ -1999,8 +1999,8 @@ int main(int, char**) {
 									//	posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 									//		((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
 									//}
-									if (vbal2 < lstvbal2)//(posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool())
-										posmsk = -posmsk;
+									//if (vbal2 < lstvbal2)//(posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool())
+									//	posmsk = -posmsk;
 									/*if (reswillwino.defined()) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
