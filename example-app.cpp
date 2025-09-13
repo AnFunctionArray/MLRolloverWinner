@@ -6,8 +6,6 @@
 #include <filesystem>
 #include <mutex>
 #include <condition_variable>
-//#include <barrier>
-#include "lbfgs1.h"
 #include <iostream>
 #include <sstream>
 #include <ppl.h>
@@ -17,16 +15,17 @@
 #include <tlhelp32.h>
 #include <random>
 #include <barrier>
-#include <ATen/autocast_mode.h>
-#include <ATen/cuda/CUDAGraph.h>
-#include <torch/nn/parallel/data_parallel.h>
-#include <torch/data/datasets/mnist.h>
-#include <torch/optim/schedulers/lr_scheduler.h>
-#include <torch/optim/schedulers/reduce_on_plateau_scheduler.h>
+//#include <ATen/autocast_mode.h>
+
+//#include <ATen/cuda/CUDAGraph.h>
+//#include <torch/nn/parallel/data_parallel.h>
+//#include <torch/data/datasets/mnist.h>
+//#include <torch/optim/schedulers/lr_scheduler.h>
+//#include <torch/optim/schedulers/reduce_on_plateau_scheduler.h>
 const float clearColor[] = { 0.0f, 0.7f, 0.7f, 1.0f };
 #define N_MODES 1
 //#define float double
-#include "lbfgs1.h"
+#include "culbfgsb/culbfgsb.h"
 //#define weight_decay lr
 #define device torch::Device(torch::kCPU, -1)
 #define devicecpu torch::Device(torch::kCPU, -1)
@@ -1080,8 +1079,8 @@ int getRoll(std::string serverSeed, std::string clientSeed, int nonce) {
 
 int main(int, char**) {
 
-	cublasContext* cublas_handle;
-	cublasStatus_t stat = cublasCreate(&cublas_handle);
+	//cublasContext* cublas_handle;
+	//cublasStatus_t stat = cublasCreate(&cublas_handle);
 	torch::nn::init::xavier_uniform_(fwdhlbl2);
 	torch::nn::init::xavier_uniform_(fwdhlbl2w);
 	torch::nn::init::xavier_uniform_(fwdhlbl2l);
@@ -1898,7 +1897,7 @@ int main(int, char**) {
 								rmaxbal = std::max(rrbal, rmaxbal).load();
 								rminbal = std::min(rrbal, rminbal).load();
 
-								vbal2 += avret;//(!fresir ? 1 : -1);
+								vbal2 += (!fresir ? 1 : -1);
 
 								vbal += (!fresir ? 1 : -1);
 								
@@ -2030,14 +2029,15 @@ int main(int, char**) {
 									//wmsklst = wmsk.clone().detach();
 									//fwdhlbl2.copy_(fwdhlblout.contiguous());
 									//fwdhlbl2.copy_(fwdhlblout.contiguous());
-									//if (!(vbal2 < lstvbal2)) {
+									//if ((vbal2 < lstvbal2)) {
 									//	posmsk.zero_();
 										//lrdir = 1.;
 										//trainedb = betsitesrmade400g > 1;
-										//fwdhlbl2.copy_(fwdhlblout.contiguous());
+									auto cf = torch::tensor(vbal2 / (float)lstvbal2).sigmoid();
+									fwdhlbl2.copy_(fwdhlbl2 * cf + (1. - cf) * fwdhlblout.contiguous());
 									//}
 									//else {
-										fwdhlbl2.copy_(fwdhlblout.contiguous());
+										//fwdhlbl2.copy_(fwdhlblout.contiguous());
 										//lrdir = -1.;
 									//}
 									if (1) {
@@ -2177,7 +2177,7 @@ int main(int, char**) {
 
 								LBFGSB_CUDA_STATE<mift> statecu{};
 								LBFGSB_CUDA_SUMMARY<mift> summarycu{};
-								statecu.m_cublas_handle = cublas_handle;
+								statecu.m_cublas_handle = 0;
 
 								auto clos = std::bind(cb, fwdhlbl2, &fwdhlblout);
 
