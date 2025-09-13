@@ -1938,6 +1938,7 @@ int main(int, char**) {
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
+									posmsk[0].flatten()[indn] = -posmsk[0].flatten()[indn];
 									posmsk[0].flatten()[indn] -= 1.;
 									//posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
@@ -2020,7 +2021,7 @@ int main(int, char**) {
 									//auto otherflp = (tmp.logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
 									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
-									tolrnll2 = ((rfmsk == 0.).toType(c10::ScalarType::Float) * tolrnll2 + (rfmsk > 0.).toType(c10::ScalarType::Float) * (tolrnll2 - 1.).abs());
+									//tolrnll2 = ((rfmsk == 0.).toType(c10::ScalarType::Float) * tolrnll2 + (rfmsk > 0.).toType(c10::ScalarType::Float) * (tolrnll2 - 1.).abs());
 									//posmskmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk + (posmsk > 0.).toType(c10::ScalarType::Float) * ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk).max() +
 									//	((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk).min().abs() + ((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk)).clone().detach();
 									//posmskmsk = posmsk.clone().detach();//.clip(0.);
@@ -2034,8 +2035,8 @@ int main(int, char**) {
 									//	posmsk.zero_();
 										//lrdir = 1.;
 										//trainedb = betsitesrmade400g > 1;
-									//auto cf = torch::tensor(vbal2 / (float)lstvbal2).sigmoid();
-									//fwdhlbl2.copy_(fwdhlbl2 * cf + (1. - cf) * fwdhlblout.contiguous());
+									//auto cf = ((float)(vbal2 < lstvbal2) + 1.) / 2. ;
+									//fwdhlbl2.copy_(fwdhlbl2 * (1. - cf) + cf * fwdhlblout.contiguous());
 									//}
 									//else {
 									fwdhlbl2.copy_(fwdhlblout.contiguous());
