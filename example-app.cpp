@@ -162,7 +162,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, {},//validation_matrix,
+		sl_target, validation_matrix,
 		pos_msk
 	);
 
@@ -1929,8 +1929,10 @@ int main(int, char**) {
 									mxpr = 1.;*/
 
 								rfgrid[0].flatten()[indn] = float(mxpr);
-								wmsk[0].flatten()[indn] = std::abs(pred - mxpr);//(!fresir);
+								wmsk[0].flatten()[indn] = pred;//(!fresir);
 								rfmsk[0].flatten()[indn] = (fresir);
+
+								//mxpr = std::abs(pred - mxpr);
 
 								if (!fresir) {
 									//posmsk[0].flatten()[indn] = posmsk[0].flatten()[indn].abs();
@@ -2030,7 +2032,7 @@ int main(int, char**) {
 									//auto tmp = ((wmsk / (wmsklst)).sigmoid() > 0.).toType(c10::ScalarType::Bool);
 									//auto otherflp = (tmp.logical_not() * rfgrid.clone().detach().toType(c10::ScalarType::Bool).logical_not()).toType(c10::ScalarType::Float);
 									//omsk = (tmp * (rfgrid.clone().detach().toType(c10::ScalarType::Bool))).toType(c10::ScalarType::Float) + otherflp;
-									tolrnll2 = rfgrid.clone().detach();//reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
+									tolrnll2 = reswillwino.defined() ? (reswillwino).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;//omsk.clone().detach().toType(c10::ScalarType::Bool).logical_not().toType(c10::ScalarType::Float);//reswillwino.defined() ? (reswillwino > 0.5).clone().detach().reshape_as(tolrnll2).toType(c10::ScalarType::Float) : tolrnll2;
 									//tolrnll2 = ((rfmsk == 0.).toType(c10::ScalarType::Float) * tolrnll2 + (rfmsk > 0.).toType(c10::ScalarType::Float) * (tolrnll2 - 1.).abs());
 									//posmskmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk + (posmsk > 0.).toType(c10::ScalarType::Float) * ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk).max() +
 									//	((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk).min().abs() + ((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk)).clone().detach();
