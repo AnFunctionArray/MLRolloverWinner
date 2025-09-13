@@ -1936,13 +1936,13 @@ int main(int, char**) {
 
 								if (!fresir) {
 									//posmsk[0].flatten()[indn] = posmsk[0].flatten()[indn].abs();
-									posmsk[0].flatten()[indn] += pred;
+									posmsk[0].flatten()[indn] += pred * lssdifg;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
 									//posmsk[0].flatten()[indn] = -posmsk[0].flatten()[indn].abs();
-									posmsk[0].flatten()[indn] -= pred;
+									posmsk[0].flatten()[indn] -= pred * lssdifg;
 									//posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
 									//posmskmsk[0].flatten()[indn] = 0.;
@@ -2023,8 +2023,8 @@ int main(int, char**) {
 									//	posmsk = torch::flip(posmsk.flatten(), 0).reshape_as(posmsk);
 									//	flippedposmsk = true;
 									//}
-										if (loss2.defined())
-										posmsk *= lssdifg;
+										//if (loss2.defined())
+										//posmsk *= lssdifg;
 
 									
 									//posmsk /= 2.;
