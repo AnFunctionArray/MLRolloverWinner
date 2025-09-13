@@ -1983,6 +1983,7 @@ int main(int, char**) {
 								totrainl = torch::roll(totrainl, 1);
 
 								bool aboveres = wasab;
+								static bool flippedposmsk = false;
 
 								if (betsitesrmade == 400) {
 									//if (trainedb) {
@@ -1999,8 +2000,13 @@ int main(int, char**) {
 									//	posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
 									//		((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
 									//}
-									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool())
+									if (flippedposmsk)
 										posmsk = -posmsk;
+									flippedposmsk = false;
+									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool()) {
+										posmsk = -posmsk;
+										flippedposmsk = true;
+									}
 									/*if (reswillwino.defined()) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
@@ -2009,7 +2015,7 @@ int main(int, char**) {
 									//	posmsk = (posmsk != posmsk.max()).toType(c10::ScalarType::Float) *
 									//		(posmsk != posmsk.min()).toType(c10::ScalarType::Float) * posmsk;
 									//}
-									posmskmsk = posmsk + vbal2;//posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
+									posmskmsk = posmsk + posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
 										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
 									wmsk = wmsk;
 
