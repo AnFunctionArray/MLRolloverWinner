@@ -2034,11 +2034,11 @@ int main(int, char**) {
 									//	posmsk.zero_();
 										//lrdir = 1.;
 										//trainedb = betsitesrmade400g > 1;
-									auto cf = torch::tensor(vbal2 / (float)lstvbal2).sigmoid();
-									fwdhlbl2.copy_(fwdhlbl2 * cf + (1. - cf) * fwdhlblout.contiguous());
+									//auto cf = torch::tensor(vbal2 / (float)lstvbal2).sigmoid();
+									//fwdhlbl2.copy_(fwdhlbl2 * cf + (1. - cf) * fwdhlblout.contiguous());
 									//}
 									//else {
-										//fwdhlbl2.copy_(fwdhlblout.contiguous());
+									fwdhlbl2.copy_(fwdhlblout.contiguous());
 										//lrdir = -1.;
 									//}
 									if (1) {
