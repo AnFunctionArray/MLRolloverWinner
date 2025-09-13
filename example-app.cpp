@@ -624,7 +624,7 @@ struct Net2Impl : NetImpl {
 
 		std::vector<torch::Tensor> cnvpars;
 		for (int i = 0; i < 1; ++i) {
-			layers[i].rnn1 = torch::nn::LSTM(torch::nn::LSTMOptions(6, 20).num_layers(6).bidirectional(true));
+			layers[i].rnn1 = torch::nn::LSTM(torch::nn::LSTMOptions(20, 20).num_layers(6).bidirectional(true));
 			//layers[i].embds = RotaryPositionalEmbeddings(20);
 			if (0) {
 
@@ -644,16 +644,6 @@ struct Net2Impl : NetImpl {
 						register_module("cnvs1d" + std::to_string(i) + std::to_string(y * 8 + ii), layers[i].cnvs1d[y * 8 + ii].cnv);
 
 						cnvpars.append_range(layers[i].cnvs1d[y * 8 + ii].cnv->parameters());
-						if (ii % 2 == 1)
-							di += 1;
-					}
-
-					di = 0;
-					for (int ii = 0; ii < 6; ++ii) {
-						layers[i].cnvs1d1[y * 8 + ii].cnv = torch::nn::Conv1d{ torch::nn::Conv1dOptions(20, 20, 2).dilation(1 << di) }; // .dilation(1 << di).padding((1 << di) - 1)
-						register_module("cnvs1d1" + std::to_string(i) + std::to_string(y * 8 + ii), layers[i].cnvs1d1[y * 8 + ii].cnv);
-
-						cnvpars.append_range(layers[i].cnvs1d1[y * 8 + ii].cnv->parameters());
 						if (ii % 2 == 1)
 							di += 1;
 					}
@@ -704,18 +694,7 @@ struct Net2Impl : NetImpl {
 		int ii = 0;
 		int y = 0;
 
-		auto in = layers[i].trans4->encoder.forward(inputl);//layers[i].embds->forward(inputl.unsqueeze(1), torch::tensor({ (int64_t)rotarypos })).squeeze(1);
-		
-		y = 0;
-		inputl = in;
-		for (ii = 0; ii < 6; ++ii) {
-
-			inputl = (layers[i].cnvs1d1[y * 8 + ii].cnv(inputl));
-
-			inputl = torch::relu(inputl);
-
-		}
-		
+		//auto in = layers[i].embds->forward(inputl.unsqueeze(1), torch::tensor({ (int64_t)rotarypos })).squeeze(1);
 		auto rnnres = layers[i].rnn1(inputl, std::tuple{hlin[i][0].toType(c10::ScalarType::Half), hlin[i][1].toType(c10::ScalarType::Half)});
 
 		auto rnno = (std::get<0>(rnnres));//std::get<0>(rnnres).chunk(2, -1)[0];//,
@@ -745,7 +724,7 @@ struct Net2Impl : NetImpl {
 
 		}
 
-		inputl = layers[i].trans4->decoder.forward(inputl, in);//layers[i].trans4(inputl, inputl);
+		inputl = layers[i].trans4(inputl, inputl);
 
 		todrawres = inputl;
 
@@ -2040,7 +2019,8 @@ int main(int, char**) {
 									wmsk = wmsk;
 
 									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool()) {
-										posmsk = -posmsk;
+										//posmsk = -posmsk;
+										posmsk = torch::roll(posmsk, 1);
 										flippedposmsk = true;
 									}
 
