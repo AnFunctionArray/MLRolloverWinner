@@ -2019,7 +2019,7 @@ int main(int, char**) {
 									wmsk = wmsk;
 
 									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool()) {
-										//posmsk = -posmsk;
+										posmsk = -posmsk;
 										posmsk = torch::flip(posmsk.flatten(), 0).reshape_as(posmsk);
 										flippedposmsk = true;
 									}
