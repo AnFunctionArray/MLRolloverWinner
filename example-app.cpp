@@ -624,7 +624,7 @@ struct Net2Impl : NetImpl {
 
 		std::vector<torch::Tensor> cnvpars;
 		for (int i = 0; i < 1; ++i) {
-			layers[i].rnn1 = torch::nn::LSTM(torch::nn::LSTMOptions(10, 20).num_layers(6).bidirectional(true));
+			layers[i].rnn1 = torch::nn::LSTM(torch::nn::LSTMOptions(6, 20).num_layers(6).bidirectional(true));
 			//layers[i].embds = RotaryPositionalEmbeddings(20);
 			if (0) {
 
@@ -649,8 +649,8 @@ struct Net2Impl : NetImpl {
 					}
 
 					di = 0;
-					for (int ii = 0; ii < 10; ++ii) {
-						layers[i].cnvs1d1[y * 8 + ii].cnv = torch::nn::Conv1d{ torch::nn::Conv1dOptions(20, 20, 2) };//.dilation(1 << di).padding((1 << di) - 1) }; // .dilation(1 << di).padding((1 << di) - 1)
+					for (int ii = 0; ii < 6; ++ii) {
+						layers[i].cnvs1d1[y * 8 + ii].cnv = torch::nn::Conv1d{ torch::nn::Conv1dOptions(20, 20, 2).dilation(1 << di) }; // .dilation(1 << di).padding((1 << di) - 1)
 						register_module("cnvs1d1" + std::to_string(i) + std::to_string(y * 8 + ii), layers[i].cnvs1d1[y * 8 + ii].cnv);
 
 						cnvpars.append_range(layers[i].cnvs1d1[y * 8 + ii].cnv->parameters());
@@ -708,7 +708,7 @@ struct Net2Impl : NetImpl {
 		
 		y = 0;
 		inputl = in;
-		for (ii = 0; ii < 10; ++ii) {
+		for (ii = 0; ii < 6; ++ii) {
 
 			inputl = (layers[i].cnvs1d1[y * 8 + ii].cnv(inputl));
 
