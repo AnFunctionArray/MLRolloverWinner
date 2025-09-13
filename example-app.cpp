@@ -162,7 +162,7 @@ torch::Tensor hybrid_loss(
 
 	torch::Tensor sl_loss = torch::binary_cross_entropy_with_logits(
 		model_output,
-		sl_target, validation_matrix,
+		sl_target, {},//validation_matrix,
 		pos_msk
 	);
 
@@ -1934,13 +1934,13 @@ int main(int, char**) {
 
 								if (!fresir) {
 									//posmsk[0].flatten()[indn] = posmsk[0].flatten()[indn].abs();
-									posmsk[0].flatten()[indn] += 1.;
+									posmsk[0].flatten()[indn] += mxpr;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
 									//posmsk[0].flatten()[indn] = -posmsk[0].flatten()[indn].abs();
-									posmsk[0].flatten()[indn] -= 1.;
+									posmsk[0].flatten()[indn] -= mxpr;
 									//posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
 									//posmskmsk[0].flatten()[indn] = 0.;
