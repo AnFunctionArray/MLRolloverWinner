@@ -1934,13 +1934,13 @@ int main(int, char**) {
 
 								if (!fresir) {
 									//posmsk[0].flatten()[indn] = posmsk[0].flatten()[indn].abs();
-									posmsk[0].flatten()[indn] += vbal2;
+									posmsk[0].flatten()[indn] += 1.;
 									//rfgrid[0].flatten()[indn] = float(predright);
 									//posmskmsk[0].flatten()[indn] = posmsk[0].flatten()[indn];
 								}
 								else {
 									//posmsk[0].flatten()[indn] = -posmsk[0].flatten()[indn].abs();
-									posmsk[0].flatten()[indn] -= vbal2;
+									posmsk[0].flatten()[indn] -= 1.;
 									//posmsk[0].flatten()[indn] -= avret;
 									//rfgrid[0].flatten()[indn] = (rfgrid[0].flatten()[indn] - 1.).abs();
 									//posmskmsk[0].flatten()[indn] = 0.;
@@ -1988,19 +1988,19 @@ int main(int, char**) {
 									//if (trainedb) {
 									//	std::exit(0);
 									//}
-									auto minv = ((posmsk <= 0.).toType(c10::ScalarType::Float) * posmsk).min();
+									//auto minv = ((posmsk <= 0.).toType(c10::ScalarType::Float) * posmsk).min();
 									//if (minv.item().toFloat() > 0.) {
-										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk) +
-											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk - minv);
+									//	posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk) +
+									//		((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk - minv);
 									//}
 
-									minv = ((posmsk >= 0.).toType(c10::ScalarType::Float) * posmsk).min();
+									//minv = ((posmsk >= 0.).toType(c10::ScalarType::Float) * posmsk).min();
 									//if (minv.item().toFloat() > 0.) {
-										posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
-											((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
+									//	posmsk = ((posmsk > 0.).toType(c10::ScalarType::Float) * posmsk - minv) +
+									//		((posmsk < 0.).toType(c10::ScalarType::Float) * posmsk);
 									//}
-									//if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool())
-									//	posmsk = -posmsk;
+									if ((posmsk.min() < 0.).item().toBool() || (posmsk.max() > 0.).item().toBool())
+										posmsk = -posmsk;
 									/*if (reswillwino.defined()) {
 										rfgrid = (wmsk > 0.).toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) +
 											((wmsk > 0.).logical_not().toType(c10::ScalarType::Float) * reswillwino.reshape_as(wmsk) - 1.).abs();
@@ -2009,7 +2009,7 @@ int main(int, char**) {
 									//	posmsk = (posmsk != posmsk.max()).toType(c10::ScalarType::Float) *
 									//		(posmsk != posmsk.min()).toType(c10::ScalarType::Float) * posmsk;
 									//}
-									posmskmsk = posmsk + posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
+									posmskmsk = posmsk + vbal2;//posmsk.min().abs();//(posmsk == posmsk.max()).toType(c10::ScalarType::Float) +
 										//(posmsk == posmsk.min()).toType(c10::ScalarType::Float);//posmsk + posmsk.abs().max();
 									wmsk = wmsk;
 
